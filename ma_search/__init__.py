@@ -20,6 +20,8 @@ limitations under the License.
 import os
 import logging
 
+from ma_search.config import Config
+
 __package__ = "ma_search"
 __version__ = "0.0.1"
 
@@ -65,4 +67,4 @@ logger = logging.getLogger(__name__)
 _initLogging(logger)
 
 # Create config object
-# CONFIG = Config()
+CONFIG = Config()
