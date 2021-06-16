@@ -98,9 +98,13 @@ class Config():
         valid = True
 
         if self.dbProvider == "sqlite":
-            sqliteDir = os.path.dirname(self.sqlitePath)
-            if not os.path.isdir(sqliteDir):
-                logger.error("Cannot locate folder: %s" % sqliteDir)
+            if isinstance(self.sqlitePath, str):
+                sqliteDir = os.path.dirname(self.sqlitePath)
+                if not os.path.isdir(sqliteDir):
+                    logger.error("Cannot locate folder: %s" % sqliteDir)
+                    valid = False
+            else:
+                logger.error("Setting 'sqlitePath' must be a string")
                 valid = False
 
         return valid
