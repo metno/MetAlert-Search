@@ -1,0 +1,9 @@
+# Python
+*.pyc
+__pycache__
+
+# Tests
+/.pytest_cache/
+/.coverage
+/htmlcov/
+/coverage.*
