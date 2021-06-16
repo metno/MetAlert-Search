@@ -18,6 +18,7 @@ limitations under the License.
 """
 
 import os
+import sys
 import logging
 
 from ma_search.config import Config
@@ -68,3 +69,13 @@ _initLogging(logger)
 
 # Create config object
 CONFIG = Config()
+
+def apiMain():
+    """This is the main entry point for the api process.
+    """
+    if not CONFIG.readConfig(configFile=os.environ.get("MA_SEARCH_CONFIG", None)):
+        sys.exit(1)
+
+    sys.exit()
+
+# END apiMain
