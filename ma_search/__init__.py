@@ -17,5 +17,52 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
+import logging
+
 __package__ = "ma_search"
 __version__ = "0.0.1"
+
+def _initLogging(logObj):
+    """Call to initialise logging
+    """
+    # Read environment variables
+    wantLevel = os.environ.get("MA_SEARCH_LOGLEVEL", "INFO")
+    logFile = os.environ.get("MA_SEARCH_LOGFILE", None)
+
+    # Determine log level and format
+    if hasattr(logging, wantLevel):
+        logLevel = getattr(logging, wantLevel)
+    else:
+        print("Invalid logging level '%s' in environment variable MA_SEARCH_LOGLEVEL" % wantLevel)
+        logLevel = logging.INFO
+
+    if logLevel < logging.INFO:
+        msgFormat = "[{asctime:}] {name:>28}:{lineno:<4d} {levelname:8s} {message:}"
+    else:
+        msgFormat = "{levelname:8s} {message:}"
+
+    logFormat = logging.Formatter(fmt=msgFormat, style="{")
+    logObj.setLevel(logLevel)
+
+    # Create stream handlers
+    hStdOut = logging.StreamHandler()
+    hStdOut.setLevel(logLevel)
+    hStdOut.setFormatter(logFormat)
+    logObj.addHandler(hStdOut)
+
+    if logFile is not None:
+        hFile = logging.FileHandler(logFile, encoding="utf-8")
+        hFile.setLevel(logLevel)
+        hFile.setFormatter(logFormat)
+        logObj.addHandler(hFile)
+
+    return
+
+# Logging Setup
+# Must be called before the CONFIG object is created
+logger = logging.getLogger(__name__)
+_initLogging(logger)
+
+# Create config object
+# CONFIG = Config()
