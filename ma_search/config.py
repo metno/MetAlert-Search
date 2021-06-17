@@ -57,7 +57,7 @@ class Config():
         Returns
         -------
         bool
-            True of successful, False if anything failed.
+            True if successful, False if anything failed.
         """
         if configFile is None:
             configFile = os.path.join(self._pkgRoot, "config.yaml")

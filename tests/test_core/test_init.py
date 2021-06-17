@@ -47,8 +47,8 @@ def testCoreInit_Logger(tmpDir):
 
     os.environ["MA_SEARCH_LOGLEVEL"] = "INVALID"
     logger = logging.getLogger(__name__)
-    ma_search._initLogging(logger)
-    assert logger.getEffectiveLevel() == logging.INFO
+    with pytest.raises(ValueError):
+        ma_search._initLogging(logger)
 
     # Test log file
     logFile = os.path.join(tmpDir, "test.log")
