@@ -42,8 +42,9 @@ def _initLogging(logObj):
     if hasattr(logging, wantLevel):
         logLevel = getattr(logging, wantLevel)
     else:
-        print("Invalid logging level '%s' in environment variable MA_SEARCH_LOGLEVEL" % wantLevel)
-        logLevel = logging.INFO
+        raise ValueError(
+            "Invalid logging level '%s' in environment variable MA_SEARCH_LOGLEVEL" % wantLevel
+        )
 
     if logLevel < logging.INFO:
         msgFormat = "[{asctime:}] {name:>28}:{lineno:<4d} {levelname:8s} {message:}"
