@@ -60,7 +60,7 @@ def testCoreConfig_ReadFile(tmpDir, monkeypatch):
     assert theConf._rawConf["groupOne"]["keyFour"] == ["value1", "value2"]
 
     # Read with no file path set, but a folder that contains the test file
-    theConf.pkgRoot = tmpDir
+    theConf._pkgRoot = tmpDir
     assert theConf.readConfig(configFile=None) is True
     assert theConf._rawConf["groupOne"]["keyOne"] == 1
     assert theConf._rawConf["groupOne"]["keyTwo"] == "two"
