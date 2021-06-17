@@ -27,7 +27,12 @@ __package__ = "ma_search"
 __version__ = "0.0.1"
 
 def _initLogging(logObj):
-    """Call to initialise logging
+    """Initialise logging and parse environment variables for logging.
+
+    Parameters
+    ----------
+    logObj : :obj:`logging.Logger`
+        An instance of Logger to be initialised.
     """
     # Read environment variables
     wantLevel = os.environ.get("MA_SEARCH_LOGLEVEL", "INFO")
@@ -67,7 +72,7 @@ def _initLogging(logObj):
 logger = logging.getLogger(__name__)
 _initLogging(logger)
 
-# Create config object
+# Create a global config object
 CONFIG = Config()
 
 def apiMain():

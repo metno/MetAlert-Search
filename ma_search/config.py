@@ -24,11 +24,18 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Config():
+    """Main config class wrapping the config yaml file.
+    """
 
     def __init__(self):
 
-        # Paths
-        self.pkgRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+        # Internals
+        self._pkgRoot = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+        self._rawConf = {}
+
+        # Config Settings
+        # ===============
+        # These should only be set from file.
 
         # Core Values
         self.dbProvider = None
@@ -36,17 +43,24 @@ class Config():
         # SQLite Settings
         self.sqlitePath = None
 
-        # Internals
-        self._rawConf = {}
-
         return
 
     def readConfig(self, configFile=None):
-        """Read the config file. If the configFile variable is not set,
-        the class will look for the file in the source root folder.
+        """Read the config file.
+
+        Parameters
+        ----------
+        configFile : str or None, optional
+            The config file to be loaded. If None, pgkRoot/config.yaml
+            is attempted loaded instead.
+
+        Returns
+        -------
+        bool
+            True of successful, False if anything failed.
         """
         if configFile is None:
-            configFile = os.path.join(self.pkgRoot, "config.yaml")
+            configFile = os.path.join(self._pkgRoot, "config.yaml")
 
         if not os.path.isfile(configFile):
             logger.error("Config file not found: %s" % configFile)
@@ -92,8 +106,14 @@ class Config():
         return
 
     def _validateConfig(self):
-        """Check config variable dependencies. It needs to be called after all
-        the read functions when all settings have been handled.
+        """Check config variable dependencies. It needs to be called
+        after all the read functions when all settings have been
+        handled.
+
+        Returns
+        -------
+        bool
+            True if all settings passed check, False otherwise.
         """
         valid = True
 
