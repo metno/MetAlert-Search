@@ -94,4 +94,4 @@ def testCoreConfig_Validate(tmpDir, caplog):
     theConf.sqlitePath = os.path.join(tmpDir, "stuff.db")
     assert theConf._validateConfig() is True
 
-# # END Test testCoreConfig_Validate
+# END Test testCoreConfig_Validate
