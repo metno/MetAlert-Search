@@ -16,17 +16,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import logging
-from re import finditer
-import sys
-import textwrap
-import mysql.connector
-
-from collections.abc import Iterable
-
-# needed for some additional funcitons only
-import numpy as np
 import json
+import logging
+import sys
+from collections.abc import Iterable
+from re import finditer
+
+import mysql.connector
+import numpy as np
 
 logging.basicConfig(level="INFO")
 
@@ -154,10 +151,10 @@ def get_elements(tedids, cursor, args="name,id,corners,type"):
 
 def plot_json(fn):
     """Plot json input from file."""
-    import geopandas as gpd
     import contextily as ctx
-
+    import geopandas as gpd
     import matplotlib.pyplot as plt
+
     # from shapely.geometry import Polygon
 
     df = gpd.read_file(finditer)
@@ -166,7 +163,8 @@ def plot_json(fn):
     plt.show()
 
 def main():
-    """
+    """Import polygons from TED [and dump as geoJSON]
+
     Usage:
         python file.py [ted-id file] [fnout]
         - ted-id file contains ted ids separated by ':'

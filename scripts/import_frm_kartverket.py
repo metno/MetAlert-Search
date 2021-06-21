@@ -9,7 +9,7 @@ you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
-    
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -107,23 +107,40 @@ def find_multipolygons(data):
             logging.info(f"{item[name_str]} (no. {i}) has {len(polygon.geoms)} polygons")
 
 
-if __name__ == "__main__":
-    sources = {"fylker": None, "kommuner": None}
-
-    for key in sources.keys():
-        sources[key] = get_kartverket_data(key)
-        dump_data(sources[key], f"kartverket_{key}.json")
-
-    # for key in sources.keys():
-    #     sources[key] = load_data(f"kartverket_{key}.json")
-
-    for key in sources.keys():
-        data = sources[key]
-        find_multipolygons(data)
-
+def example_plot(sources):
+    """Example plot of Malik, a MultiPolygon and cal. of intersect. ratio"""
     # example plot
     i_data = 271
     polygon1 = shape(sources["kommuner"][i_data]["omrade"])
     for geom in polygon1.geoms:
         plt.plot(*geom.exterior.xy)
+
+    # Interseciton of Malvik to Trøndelag
+    malvik = shape(sources["kommuner"][i_data]["omrade"])  # malvik
+    for item in sources["fylker"]:
+        if int(item["fylkesnummer"]) == 50:
+            print("bla", item["fylkesnummer"])
+            fylke = shape(item["omrade"])  # Trøndelag
+            continue
+    intersection = malvik.intersection(fylke)
+    print("ratio interseciton / kommune: ", intersection.area / fylke.area)
+    print("ratio interseciton / fylke: ", intersection.area / malvik.area)
     plt.show()
+
+
+if __name__ == "__main__":
+    sources = {"fylker": None, "kommuner": None}
+
+    # Get polygons and save to disk
+    for key in sources.keys():
+        sources[key] = get_kartverket_data(key)
+        dump_data(sources[key], f"kartverket_{key}.json")
+
+    # # read from disk instead
+    # for key in sources.keys():
+    #     sources[key] = load_data(f"kartverket_{key}.json")
+
+    # for key in sources.keys():
+    #     data = sources[key]
+    #     find_multipolygons(data)
+
