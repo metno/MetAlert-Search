@@ -4,4 +4,5 @@
     - `import_from_kartverket.py`: Imports boundary data for administrative districts (kommuner and
          fylker) of Norway.
     - `import_from_ted.py`: Imports additional, MET defined polygons from TED database. Needs to be run on a machine
-        where TED is available.
+        where TED is available. `ted_fjellomrader_sornorge.txt` is an example of a collection of TED ids that can to
+        be imported with script.
