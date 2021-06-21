@@ -86,12 +86,12 @@ def testCoreConfig_Validate(tmpDir, caplog):
 
     # Not a valid path
     caplog.clear()
-    theConf.sqlitePath = "/not/a/valid/path/stuff.db"
+    theConf.sqlitePath = "/not/a/valid/path/"
     assert theConf._validateConfig() is False
     assert "Cannot locate folder:" in caplog.text
 
     # Folder exists (the file does not need to exist)
-    theConf.sqlitePath = os.path.join(tmpDir, "stuff.db")
+    theConf.sqlitePath = tmpDir
     assert theConf._validateConfig() is True
 
 # END Test testCoreConfig_Validate
