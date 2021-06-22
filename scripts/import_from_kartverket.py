@@ -18,23 +18,21 @@ limitations under the License.
 """
 
 import json
-import requests
 import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import List, Union
 
-# needed for some additional funcitons only
-import pyproj
-
-from shapely.geometry import shape, Point
-from shapely.ops import transform
-
+import dateutil.parser as dtparser
 import geopandas as gpd
-
 import matplotlib.pyplot as plt
+
 
 logging.basicConfig(level="INFO")
 
 
-def get_kartverket_data(coordsys_in=25833, coordsys_out=4326):
+def get_kartverket_data(what, fn, crs_in, crs_out="epsg:4326"):
     """Transform Kartverket polygon data for Kommuner / Fylker
 
     The datasets have to be downloaded manually, see
@@ -52,29 +50,30 @@ def get_kartverket_data(coordsys_in=25833, coordsys_out=4326):
     Args:
         what (str): What information to get. Has to be in
             ["fylke", "kommune"]
-        coordsys_in (int): Coordinate system of input as EPSG code. Default is
-            25833, `EUREF89 UTM sone 33, 2d`
-        coordsys_out (int): Coordinate system for output as EPSG code.
-            Default is 4326, which is WGS84.
+        crs_in (str or int): Coordinate system of input.
+        crs_out (str or int): Coordinate system for output.
+            Default is "epsg:4326", which is WGS84.
 
     Returns:
         (json): List of Json files with name, geometry, (...).
 
     """
+    if what == "fylke":
+        number_str = "fylkesnummer"
+    elif what == "kommune":
+        number_str = "kommunenummer"
 
-    fn = "kartverket_data/Basisdata_0000_Norge_25833_Kommuner_GEOJSON.geojson"
+    logging.info("Processing data for %s", fn)
     data = load_data(fn)
 
-    crsin = pyproj.CRS(f'EPSG:{coordsys_in}')
-    crsout = pyproj.CRS(f'EPSG:{coordsys_out}')
-
-    # import geopandas
+    base_key = next(iter(data)).split(".")[0]
     # data = geopandas.read_file(fn) # doesn't work due to complexity
-
-    df = gpd.GeoDataFrame.from_features(data['administrative_enheter.kommune']['features'], crs=crsin)
-    df = df.to_crs(crsout)
+    df = gpd.GeoDataFrame.from_features(data[f'{base_key}.{what}']['features'],
+         crs=crs_in)
+    df = df.to_crs(crs_out)
     df["navn"] = df["navn"].apply(pd_convert_nested_name)
-    df = df.dissolve(by='navn', as_index=False)
+    # gather to Multipolygon by kommune/fylke number if necessary
+    df = df.dissolve(by=number_str, as_index=False)
 
     return df
 
@@ -94,67 +93,59 @@ def load_data(fn='kartdata.json'):
         data = json.load(f)
     return data
 
+@dataclass
+class Sources:
+    fn_in: Union[str, Path]
+    fn_out: Union[str, Path]
+    valid_from: Union[datetime, str]
+    valid_to: Union[datetime, str]
+    crs_in: str
+    crs_out: str = "EPSG:4326"
+    labels: List[str] = field(default_factory=list)
 
-# def find_multipolygons(data):
-#     """ Find "true" multipolygons in kartverkets data.
-
-#     Finds geoJson objects which more then one polygon in the same (
-#     Multi)Polygon object
-
-#     Args:
-#         data (List[GeoJSON]) List of Fylke/Kommune geometries
-#     """
-
-#     for i, item in enumerate(data):
-#         polygon = shape(item["omrade"])
-#         if len(polygon.geoms) != 1:
-#             if "fylkesnavn" in item:
-#                 name_str = "fylkesnavn"
-#             elif "kommunenavn" in item:
-#                 name_str = "kommunenavn"
-#             else:
-#                 raise NotImplementedError
-#             logging.info(f"{item[name_str]} (no. {i}) has {len(polygon.geoms)} polygons")
-
-
-# def example_plot(sources):
-#     """Example plot of Malik, a MultiPolygon and cal. of intersect. ratio"""
-#     # example plot
-#     i_data = 271
-#     polygon1 = shape(sources["kommuner"][i_data]["omrade"])
-#     for geom in polygon1.geoms:
-#         plt.plot(*geom.exterior.xy)
-
-#     # Interseciton of Malvik to Trøndelag
-#     malvik = shape(sources["kommuner"][i_data]["omrade"])  # malvik
-#     for item in sources["fylker"]:
-#         if int(item["fylkesnummer"]) == 50:
-#             print("bla", item["fylkesnummer"])
-#             fylke = shape(item["omrade"])  # Trøndelag
-#             continue
-#     intersection = malvik.intersection(fylke)
-#     print("ratio interseciton / kommune: ", intersection.area / fylke.area)
-#     print("ratio interseciton / fylke: ", intersection.area / malvik.area)
-#     plt.show()
-
+    def __post_init__(self):
+        if isinstance(self.valid_from, str):
+            self.valid_from = "" if self.valid_from == "" else dtparser.parse(self.valid_from)
+        if isinstance(self.valid_to, str):
+            self.valid_to = "" if self.valid_to == "" else dtparser.parse(self.valid_to)
 
 if __name__ == "__main__":
-    # sources = {"fylker": None, "kommuner": None}
+    datadir = Path("scripts/kartverket_data")
+    outdir = Path("scripts/kartverket_data/out")
+    outdir.mkdir(exist_ok=True)
 
-    # # Get polygons and save to disk
-    # for key in sources.keys():
-    #     sources[key] = get_kartverket_data(key)
-    #     dump_data(sources[key], f"kartverket_{key}.json")
+    # Kommuner
+    what = "Kommune"
+    items = [{"name":"Kommuner", "from": "2021", "to": ""},
+                {"name":"Kommuner2020", "from": "2019", "to": "2020"},
+                {"name":"Kommuner2019", "from": "2019", "to": "2020"}]
+    for item in items:
+        entry = Sources(fn_in=datadir/f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson",
+                        fn_out=outdir/f"test_{item['name']}.geojson",
+                        valid_from = item["from"],
+                        valid_to = item["to"],
+                        crs_in="EPSG:25833", #`EUREF89 UTM sone 33, 2d`
+                        labels=what)
+        data = get_kartverket_data(what=what.lower(), fn=entry.fn_in, crs_in=entry.crs_in)
+        data.to_file(entry.fn_out, driver='GeoJSON')
+        # data.plot()
+        # data[data.geom_type == "MultiPolygon"].plot()
+        # plt.show()
 
-    data = get_kartverket_data()
-    data.to_file("test.geojson", driver='GeoJSON')
 
-    # # read from disk instead
-    # for key in sources.keys():
-    #     sources[key] = load_data(f"kartverket_{key}.json")
-    # example_plot(sources)
-
-    # for key in sources.keys():
-    #     data = sources[key]
-    #     find_multipolygons(data)
-
+    # Fylker
+    what = "Fylke"
+    items = [{"name":"Fylker", "from": "2021", "to": ""},
+             {"name":"Fylker2020", "from": "2019", "to": "2020"},
+             {"name":"Fylker2019", "from": "2019", "to": "2020"}]
+    for item in items:
+        entry = Sources(fn_in=datadir/f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson",
+                        fn_out=outdir/f"test_{item['name']}.geojson",
+                        valid_from = item["from"],
+                        valid_to = item["to"],
+                        crs_in="EPSG:25833", #`EUREF89 UTM sone 33, 2d`
+                        labels=what)
+        data = get_kartverket_data(what=what.lower(), fn=entry.fn_in, crs_in=entry.crs_in)
+        data.to_file(entry.fn_out, driver='GeoJSON')
+        # data.plot()
+        # plt.show()
