@@ -39,6 +39,7 @@ class Config():
 
         # Core Values
         self.dbProvider = None
+        self.dataPath = None
 
         # SQLite Settings
         self.sqlitePath = None
@@ -51,7 +52,7 @@ class Config():
         Parameters
         ----------
         configFile : str or None, optional
-            The config file to be loaded. If None, pgkRoot/config.yaml
+            The config file to be loaded. If None, pkgRoot/config.yaml
             is attempted loaded instead.
 
         Returns
@@ -93,6 +94,7 @@ class Config():
         conf = self._rawConf.get("main", {})
 
         self.dbProvider = conf.get("dbProvider", self.dbProvider)
+        self.dataPath = conf.get("dataPath", self.dataPath)
 
         return
 
