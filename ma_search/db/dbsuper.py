@@ -19,9 +19,23 @@ limitations under the License.
 
 import logging
 
+from datetime import datetime
+
 import ma_search
 
 logger = logging.getLogger(__name__)
+
+MAP_DICT = {
+    "UUID": (str, True),
+    "label": (str, True),
+    "source": (str, True),
+    "administrativeName": (str, False),
+    "administrativeID": (str, False),
+    "validFrom": (datetime, False),
+    "validTo": (datetime, False),
+    "polygon": ((dict, list), False),
+    "coordinateSystem": (str, True),
+}
 
 class Database():
 
@@ -58,5 +72,21 @@ class Database():
             The UUID of the entry to be updated
         """
         raise NotImplementedError
+
+    ##
+    #  Internal Functions
+    ##
+
+    def _validateMapDict(self, data):
+        """
+        """
+        valid = True
+        for key, req in MAP_DICT.items():
+            valid &= key in data
+            value = data[key]
+            if not isinstance(value, req[0]):
+                valid &= req[1] and value is None
+
+        return valid
 
 # END Class Database
