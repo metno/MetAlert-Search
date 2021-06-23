@@ -19,13 +19,16 @@ limitations under the License.
 
 import json
 import logging
+import dataclasses
 from dataclasses import dataclass, field
-from datetime import datetime
+import datetime
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Optional
+from shapely.geometry import Polygon, MultiPolygon, mapping
 
 import dateutil.parser as dtparser
 import geopandas as gpd
+import pandas as pd
 import matplotlib.pyplot as plt
 
 
@@ -71,9 +74,11 @@ def get_kartverket_data(what, fn, crs_in, crs_out="epsg:4326"):
     df = gpd.GeoDataFrame.from_features(data[f'{base_key}.{what}']['features'],
          crs=crs_in)
     df = df.to_crs(crs_out)
-    df["navn"] = df["navn"].apply(pd_convert_nested_name)
     # gather to Multipolygon by kommune/fylke number if necessary
     df = df.dissolve(by=number_str, as_index=False)
+    df["administrativeName"] = df["navn"].apply(pd_convert_nested_name)
+    df["administrativeID"] = df[number_str]
+
 
     return df
 
@@ -83,9 +88,16 @@ def pd_convert_nested_name(col):
     return col[0]["navn"]
 
 
-def dump_data(request, fn='kartdata.json'):
+def jsondefault(o):
+    """Converts datetime. to isoformat when dumping json"""
+    if isinstance(o, (datetime.date, datetime.datetime)):
+        return o.isoformat()
+
+def dump_data(data, fn='kartdata.json', **kwargs):
+    kwargs.setdefault("default", jsondefault)
+    kwargs.setdefault("ensure_ascii", False)
     with open(fn, 'w') as f:
-        json.dump(request, f, ensure_ascii=False)
+        json.dump(data, f, **kwargs)
 
 
 def load_data(fn='kartdata.json'):
@@ -97,11 +109,16 @@ def load_data(fn='kartdata.json'):
 class Sources:
     fn_in: Union[str, Path]
     fn_out: Union[str, Path]
-    valid_from: Union[datetime, str]
-    valid_to: Union[datetime, str]
+    source: str
+    valid_from: Union[datetime.datetime, str]
+    valid_to: Union[datetime.datetime, str]
     crs_in: str
+
     crs_out: str = "EPSG:4326"
     labels: List[str] = field(default_factory=list)
+    # administrativeName: Optional[str] = None
+    # administrativeID: Optional[str] = None
+    # geometry: Optional[Union[Polygon, MultiPolygon]] = None
 
     def __post_init__(self):
         if isinstance(self.valid_from, str):
@@ -109,43 +126,60 @@ class Sources:
         if isinstance(self.valid_to, str):
             self.valid_to = "" if self.valid_to == "" else dtparser.parse(self.valid_to)
 
+map_to_db_inv = {
+    "label": "labels",
+    "source": "source",
+    "administrativeName": "administrativeName",
+    "administrativeID": "administrativeID",
+    "validFrom": "valid_from",
+    "validTo": "valid_to",
+    "polygon": "geometry",
+    "coordinateSystem": "crs_out",
+}
+map_to_db = {v: k for k, v in map_to_db_inv.items()}
+
 if __name__ == "__main__":
     datadir = Path("scripts/kartverket_data")
     outdir = Path("scripts/kartverket_data/out")
     outdir.mkdir(exist_ok=True)
 
     # Kommuner
-    what = "Kommune"
-    items = [{"name":"Kommuner", "from": "2021", "to": ""},
-                {"name":"Kommuner2020", "from": "2019", "to": "2020"},
-                {"name":"Kommuner2019", "from": "2019", "to": "2020"}]
-    for item in items:
-        entry = Sources(fn_in=datadir/f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson",
-                        fn_out=outdir/f"test_{item['name']}.geojson",
-                        valid_from = item["from"],
-                        valid_to = item["to"],
-                        crs_in="EPSG:25833", #`EUREF89 UTM sone 33, 2d`
-                        labels=what)
-        data = get_kartverket_data(what=what.lower(), fn=entry.fn_in, crs_in=entry.crs_in)
-        data.to_file(entry.fn_out, driver='GeoJSON')
-        # data.plot()
-        # data[data.geom_type == "MultiPolygon"].plot()
-        # plt.show()
+    items = {
+             "Kommune": [{"name":"Kommuner", "from": "2021", "to": ""},
+                        {"name":"Kommuner2020", "from": "2019", "to": "2020"},
+                        {"name":"Kommuner2019", "from": "2019", "to": "2020"}],
+             "Fylke": [{"name":"Fylker", "from": "2021", "to": ""},
+                       {"name":"Fylker2020", "from": "2019", "to": "2020"},
+                       {"name":"Fylker2019", "from": "2019", "to": "2020"}]
+            }
+    for key, vals in items.items():
+        for item in vals:
+            entry = Sources(fn_in=(datadir
+                                   /f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson"),
+                            fn_out=outdir/f"test_{item['name']}",
+                            valid_from = item["from"],
+                            valid_to = item["to"],
+                            crs_in="EPSG:25833", #`EUREF89 UTM sone 33, 2d`
+                            source="kartverket",
+                            labels=key)
+            data = get_kartverket_data(what=key.lower(), fn=entry.fn_in, crs_in=entry.crs_in)
+
+            # TODO: convert shapely geometry to dict [only necessary for wr to file?]
+            data["geometry"] = data["geometry"].apply(mapping)
 
 
-    # Fylker
-    what = "Fylke"
-    items = [{"name":"Fylker", "from": "2021", "to": ""},
-             {"name":"Fylker2020", "from": "2019", "to": "2020"},
-             {"name":"Fylker2019", "from": "2019", "to": "2020"}]
-    for item in items:
-        entry = Sources(fn_in=datadir/f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson",
-                        fn_out=outdir/f"test_{item['name']}.geojson",
-                        valid_from = item["from"],
-                        valid_to = item["to"],
-                        crs_in="EPSG:25833", #`EUREF89 UTM sone 33, 2d`
-                        labels=what)
-        data = get_kartverket_data(what=what.lower(), fn=entry.fn_in, crs_in=entry.crs_in)
-        data.to_file(entry.fn_out, driver='GeoJSON')
-        # data.plot()
-        # plt.show()
+            for key, val in dataclasses.asdict(entry).items():
+                if key not in map_to_db:
+                    continue
+                if key in data.columns:
+                    raise NotImplementedError(f"Key {key} would be overwritten")
+                data[key] = val
+
+             # Note: removes additional attributes
+            data = data.filter(map_to_db.keys())
+            data = data.rename(columns=map_to_db, errors="raise")
+
+            for index, row in data.iterrows():
+                row_dic = row.to_dict()
+                dump_data(row_dic, f"{entry.fn_out}_{index}")
+                raise RuntimeError("Just stop for 'debugging'")
