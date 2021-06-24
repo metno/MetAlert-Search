@@ -120,20 +120,13 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
 
     # Database Insert
     # ===============
+    uuidOne = str(uuid.uuid4())
+    uuidTwo = str(uuid.uuid4())
 
     # Insert Valid New Record
-    newUUID = str(uuid.uuid4())
     assert theDB.editMapRecord(
-        cmd="insert",
-        recordUUID=newUUID,
-        label="test label",
-        source="test source",
-        coordSystem="WGS84",
-        west=-10,
-        south=-9,
-        east=8,
-        north=7,
-        area=272,
+        cmd="insert", recordUUID=uuidOne, label="test label", source="test source",
+        coordSystem="WGS84", west=-10, south=-9, east=8, north=7, area=272,
         validFrom=datetime(2021, 1, 1, 0, 0, 0),
         validTo=datetime(2021, 12, 31, 23, 59, 59),
         meta={
@@ -145,25 +138,46 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
     cursor = theDB._conn.execute("SELECT * FROM MapData;")
     theData = cursor.fetchall()
     assert theData[0] == (
-        1, newUUID, "test label", "test source", "test adm name", "test adm ID",
+        1, uuidOne, "test label", "test source", "test adm name", "test adm ID",
         "2021-01-01T00:00:00", "2021-12-31T23:59:59", "WGS84", -10.0, -9.0, 8.0, 7.0, 272.0
     )
 
     # Insert wo/optional
-    newUUID = str(uuid.uuid4())
     assert theDB.editMapRecord(
-        cmd="insert", recordUUID=newUUID, label="test label", source="test source",
+        cmd="insert", recordUUID=uuidTwo, label="test label", source="test source",
         coordSystem="WGS84", west=-10, south=-9, east=8, north=7, area=272
     ) is True
 
     cursor = theDB._conn.execute("SELECT * FROM MapData;")
     theData = cursor.fetchall()
     assert theData[1] == (
-        2, newUUID, "test label", "test source", None, None, None, None,
+        2, uuidTwo, "test label", "test source", None, None, None, None,
         "WGS84", -10.0, -9.0, 8.0, 7.0, 272.0
     )
 
-    repeatUUID = newUUID
+    # Database Update
+    # ===============
+    assert theDB.editMapRecord(
+        cmd="update", recordUUID=uuidTwo, label="new label", source="new source",
+        coordSystem="WGS84", west=-11, south=-10, east=7, north=6, area=272,
+        validFrom=datetime(2020, 1, 1, 0, 0, 0),
+        validTo=datetime(2020, 12, 31, 23, 59, 59),
+        meta={
+            "admName": "new adm name",
+            "admID": "new adm ID"
+        }
+    ) is True
+
+    cursor = theDB._conn.execute("SELECT * FROM MapData;")
+    theData = cursor.fetchall()
+    assert theData[0] == ( # Unchanged
+        1, uuidOne, "test label", "test source", "test adm name", "test adm ID",
+        "2021-01-01T00:00:00", "2021-12-31T23:59:59", "WGS84", -10.0, -9.0, 8.0, 7.0, 272.0
+    )
+    assert theData[1] == ( # Updated
+        2, uuidTwo, "new label", "new source", "new adm name", "new adm ID",
+        "2020-01-01T00:00:00", "2020-12-31T23:59:59", "WGS84", -11.0, -10.0, 7.0, 6.0, 272.0
+    )
 
     # SQL Error
     # =========
@@ -171,7 +185,7 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
     # Non-Unique UUID
     caplog.clear()
     assert theDB.editMapRecord(
-        cmd="insert", recordUUID=repeatUUID, label="test label", source="test source",
+        cmd="insert", recordUUID=uuidTwo, label="test label", source="test source",
         coordSystem="WGS84", west=-10, south=-9, east=8, north=7, area=272
     ) is False
     assert "UNIQUE constraint failed: MapData.UUID" in caplog.text

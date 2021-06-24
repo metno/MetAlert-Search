@@ -127,7 +127,7 @@ class SQLiteDB(Database):
             logger.error("Incorrect parameters provided to editMapEntry")
             return False
 
-        if cmd.lower() == "insert":
+        if cmd == "insert":
             try:
                 self._conn.execute((
                     "INSERT INTO MapData ("
@@ -144,6 +144,32 @@ class SQLiteDB(Database):
             except Exception as e:
                 logger.error(str(e))
                 return False
+
+        elif cmd == "update":
+            try:
+                self._conn.execute((
+                    "UPDATE MapData SET "
+                    "Label = ?, "
+                    "Source = ?, "
+                    "AdmName = ?, "
+                    "AdmID = ?, "
+                    "ValidFrom = ?, "
+                    "ValidTo = ?, "
+                    "CoordSystem = ?, "
+                    "BoundWest = ?, "
+                    "BoundSouth = ?, "
+                    "BoundEast = ?, "
+                    "BoundNorth = ?, "
+                    "Area = ? "
+                    "WHERE UUID = '%s'"
+                ) % str(pUUID), (
+                    label, source, admName, admID, fromDate, toDate,
+                    coordSystem, west, south, east, north, area
+                ))
+            except Exception as e:
+                logger.error(str(e))
+                return False
+
         else:
             logger.error("Unknown command '%s'" % cmd)
             return False
