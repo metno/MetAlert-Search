@@ -1,6 +1,6 @@
 """
-MetAlert Search : Database Superclass
-=====================================
+MetAlert Search : DB Superclass Test
+====================================
 
 Copyright 2021 MET Norway
 
@@ -17,30 +17,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import logging
+import pytest
 
-import ma_search
+from ma_search.db.dbsuper import Database
 
-logger = logging.getLogger(__name__)
+@pytest.mark.db
+def testDBSuper_Class():
+    """Test the whole class.
+    """
+    theDB = Database()
 
-class Database():
+    with pytest.raises(NotImplementedError):
+        theDB.editMapRecord(*([None]*10))
 
-    def __init__(self):
-
-        self.conf = ma_search.CONFIG
-
-        return
-
-    ##
-    #  Methods
-    ##
-
-    def editMapRecord(
-        self, cmd, recordUUID, label, source, coordSystem, west, south, east, north, area,
-        validFrom=None, validTo=None, meta=None
-    ):
-        """Implemented in subclass.
-        """
-        raise NotImplementedError
-
-# END Class Database
+# END Test testDBSuper_Class

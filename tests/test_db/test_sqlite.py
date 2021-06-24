@@ -62,8 +62,49 @@ def testDBSQLite_Init(tmpConf, tmpDir):
 # END Test testDBSQLite_Init
 
 @pytest.mark.db
+def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
+    """Check that the table create functions can handle exceptions.
+    """
+    dbFile = os.path.join(tmpDir, "index.db")
+
+    tmpConf.dbProvider = "sqlite"
+    tmpConf.sqlitePath = tmpDir
+
+    # Check that the db was created
+    theDB = SQLiteDB()
+    assert theDB.conf.sqlitePath == tmpDir
+    assert os.path.isfile(dbFile)
+    assert theDB._isNew is True
+
+    # Close the DB and delete it, and check that new tables cannot be created
+    theDB._conn.close()
+    os.unlink(dbFile)
+    assert not os.path.isfile(dbFile)
+
+    caplog.clear()
+    assert theDB._createMapTable() is False
+    assert "Cannot operate on a closed database." in caplog.text
+
+    caplog.clear()
+    assert theDB._createAlertTable() is False
+    assert "Cannot operate on a closed database." in caplog.text
+
+    # DB connection set to None
+    theDB._conn = None
+
+    caplog.clear()
+    assert theDB._createMapTable() is False
+    assert "No database connection open" in caplog.text
+
+    caplog.clear()
+    assert theDB._createAlertTable() is False
+    assert "No database connection open" in caplog.text
+
+# END Test testDBSQLite_CreateTable
+
+@pytest.mark.db
 def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
-    """Test class initialisation and creation of default DB.
+    """Test MapData table INSERT and UPDATE.
     """
     dbFile = os.path.join(tmpDir, "index.db")
 
@@ -182,13 +223,21 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
     # SQL Error
     # =========
 
-    # Non-Unique UUID
+    # Insert: Non-Unique UUID
     caplog.clear()
     assert theDB.editMapRecord(
         cmd="insert", recordUUID=uuidTwo, label="test label", source="test source",
         coordSystem="WGS84", west=-10, south=-9, east=8, north=7, area=272
     ) is False
     assert "UNIQUE constraint failed: MapData.UUID" in caplog.text
+
+    # Update: Set Required to None
+    caplog.clear()
+    assert theDB.editMapRecord(
+        cmd="update", recordUUID=uuidTwo, label=None, source="test source",
+        coordSystem="WGS84", west=-10, south=-9, east=8, north=7, area=272
+    ) is False
+    assert "NOT NULL constraint failed: MapData.Label" in caplog.text
 
     # Other
     # =====
