@@ -18,8 +18,11 @@ limitations under the License.
 """
 
 import os
+import uuid
 import sqlite3
 import logging
+
+from datetime import datetime
 
 from ma_search.db.dbsuper import Database
 
@@ -56,38 +59,95 @@ class SQLiteDB(Database):
     #  Data Methods
     ##
 
-    def addMapEntry(self, data):
-        """Add a new map entry to the database.
-        Must be implemented in subclass.
+    def editMapRecord(
+        self, cmd, recordUUID, label, source, coordSystem, west, south, east, north, area,
+        validFrom=None, validTo=None, meta=None
+    ):
+        """Insert or update a map record in the database.
 
         Parameters
         ----------
-        data : dict
-            A dictionary of the data to be added to the database.
+        cmd : str
+            The command to be run on the database. Must be either "insert" or
+            "update".
+        recordUUID : str
+            The UUID of the dataset to be added.
+        label : str
+            A user-defined label for the record.
+        source : str
+            A user-defined source description for the record.
+        coordSystem : str
+            The coordinate system (datum) used for this record.
+        west, south, east, north, area : float
+            The coordinates in degrees of the bounding rectangle, and the area
+            of it as reported by shapely.
+        validFrom, validTo : datetime or None, optional
+            The validity range of the record.
+        meta : dict or None, optional
+            A dictionary of meta data values to be added. Currently accepted
+            are "admName" and "admID". Other values will be ignored.
 
         Returns
         -------
         bool :
             True if successful, otherwise False
         """
-        return True
+        pUUID = None
+        fromDate = None
+        toDate = None
+        admName = None
+        admID = None
+        valid = True
 
-    def updateMapEntry(self, uuid, data):
-        """Update a map entry in the database.
-        Must be implemented in subclass.
+        try:
+            pUUID = str(uuid.UUID(recordUUID))
+        except Exception:
+            logger.error("The UUID '%s' is not valid" % str(recordUUID))
+            valid = False
 
-        Parameters
-        ----------
-        data : dict
-            A dictionary of the data to be added to the database.
-        uuid : str
-            The UUID of the entry to be updated
+        if not (-90.0 <= south < north <= 90.0):
+            logger.error("Coordinates must be in the range (-90 <= south < north <= 90)")
+            valid = False
 
-        Returns
-        -------
-        bool :
-            True if successful, otherwise False
-        """
+        if not (-180.0 <= west < east <= 180.0):
+            logger.error("Coordinates must be in the range (-180 <= west < east <= 180)")
+            valid = False
+
+        if isinstance(validFrom, datetime):
+            fromDate = validFrom.isoformat()
+
+        if isinstance(validTo, datetime):
+            toDate = validTo.isoformat()
+
+        if isinstance(meta, dict):
+            admName = meta.get("admName", None)
+            admID = meta.get("admID", None)
+
+        if not valid:
+            logger.error("Incorrect parameters provided to editMapEntry")
+            return False
+
+        if cmd.lower() == "insert":
+            try:
+                self._conn.execute((
+                    "INSERT INTO MapData ("
+                    "UUID, Label, Source, AdmName, AdmID, ValidFrom, ValidTo, "
+                    "CoordSystem, BoundWest, BoundSouth, BoundEast, BoundNorth, Area"
+                    ") VALUES ("
+                    "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+                    ");"
+                ), (
+                    pUUID, label, source, admName, admID, fromDate, toDate,
+                    coordSystem, west, south, east, north, area
+                ))
+                self._conn.commit()
+            except Exception as e:
+                logger.error(str(e))
+                return False
+        else:
+            logger.error("Unknown command '%s'" % cmd)
+            return False
+
         return True
 
     ##

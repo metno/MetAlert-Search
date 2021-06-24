@@ -49,27 +49,11 @@ class Database():
     #  Methods
     ##
 
-    def addMapEntry(self, data):
-        """Add a new map entry to the database.
-        Must be implemented in subclass.
-
-        Parameters
-        ----------
-        data : dict
-            A dictionary of the data to be added to the database.
-        """
-        raise NotImplementedError
-
-    def updateMapEntry(self, uuid, data):
-        """Update a map entry in the database.
-        Must be implemented in subclass.
-
-        Parameters
-        ----------
-        data : dict
-            A dictionary of the data to be added to the database.
-        uuid : str
-            The UUID of the entry to be updated
+    def editMapRecord(
+        self, cmd, recordUUID, label, source, coordSystem, west, south, east, north, area,
+        validFrom=None, validTo=None, meta=None
+    ):
+        """Implemented in subclass.
         """
         raise NotImplementedError
 
