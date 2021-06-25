@@ -25,6 +25,7 @@ import logging
 from datetime import datetime
 
 from ma_search.db.dbsuper import Database
+from ma_search.common import logException
 
 logger = logging.getLogger(__name__)
 
@@ -46,13 +47,11 @@ class SQLiteDB(Database):
         return
 
     def __del__(self):
-        """Close the database when the object is destroyed.
-        """
+        """Close the database when the object is destroyed."""
         if isinstance(self._conn, sqlite3.Connection):
             logger.debug("Closing database connection")
             self._conn.commit()
             self._conn.close()
-
         return
 
     ##
@@ -103,6 +102,7 @@ class SQLiteDB(Database):
             pUUID = str(uuid.UUID(recordUUID))
         except Exception:
             logger.error("The UUID '%s' is not valid" % str(recordUUID))
+            logException()
             valid = False
 
         if not (-90.0 <= south < north <= 90.0):
@@ -141,8 +141,8 @@ class SQLiteDB(Database):
                     coordSystem, west, south, east, north, area
                 ))
                 self._conn.commit()
-            except Exception as e:
-                logger.error(str(e))
+            except Exception:
+                logException()
                 return False
 
         elif cmd == "update":
@@ -166,8 +166,8 @@ class SQLiteDB(Database):
                     label, source, admName, admID, fromDate, toDate,
                     coordSystem, west, south, east, north, area
                 ))
-            except Exception as e:
-                logger.error(str(e))
+            except Exception:
+                logException()
                 return False
 
         else:
@@ -181,12 +181,10 @@ class SQLiteDB(Database):
     ##
 
     def _checkDB(self):
-        """Check the structure of the database files.
-        """
+        """Check the structure of the database files."""
         if self._isNew:
             self._createMapTable()
             self._createAlertTable()
-
         return
 
     def _createMapTable(self):
@@ -223,8 +221,8 @@ class SQLiteDB(Database):
             )
             self._conn.commit()
 
-        except Exception as e:
-            logger.error(str(e))
+        except Exception:
+            logException()
             return False
 
         return True
@@ -260,8 +258,8 @@ class SQLiteDB(Database):
             )
             self._conn.commit()
 
-        except Exception as e:
-            logger.error(str(e))
+        except Exception:
+            logException()
             return False
 
         return True

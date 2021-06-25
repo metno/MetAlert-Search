@@ -18,6 +18,7 @@ limitations under the License.
 """
 
 import os
+import sys
 import logging
 
 logger = logging.getLogger(__name__)
@@ -43,9 +44,18 @@ def safeMakeDir(path):
 
     try:
         os.mkdir(path)
-    except Exception as e:
+    except Exception:
         logger.error("Could not create: %s" % str(path))
-        logger.error(str(e))
+        logException()
         return False
 
     return True
+
+def logException():
+    """Format and write the last exception to the logger object.
+
+    Format and log the content of an exception message. Intended to be
+    used in try/except structures to make the exception easier to read.
+    """
+    exType, exValue, _ = sys.exc_info()
+    logger.error("%s: %s" % (exType.__name__, str(exValue).strip("'")))

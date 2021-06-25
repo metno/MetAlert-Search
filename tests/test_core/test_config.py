@@ -26,8 +26,7 @@ from ma_search.config import Config
 
 @pytest.mark.core
 def testCoreConfig_ReadFile(tmpDir, monkeypatch):
-    """Test reading config file.
-    """
+    """Test reading config file."""
     theConf = Config()
 
     # Read some values and see that we get them
@@ -72,8 +71,7 @@ def testCoreConfig_ReadFile(tmpDir, monkeypatch):
 
 @pytest.mark.core
 def testCoreConfig_Validate(tmpDir, caplog):
-    """Test that the class reads all settings and validates them.
-    """
+    """Test that the class reads all settings and validates them."""
     theConf = Config()
 
     # Base Settings

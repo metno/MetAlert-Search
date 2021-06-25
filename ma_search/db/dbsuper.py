@@ -39,8 +39,7 @@ class Database():
         self, cmd, recordUUID, label, source, coordSystem, west, south, east, north, area,
         validFrom=None, validTo=None, meta=None
     ):
-        """Implemented in subclass.
-        """
+        """Implemented in subclass."""
         raise NotImplementedError
 
 # END Class Database

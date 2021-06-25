@@ -23,8 +23,7 @@ from ma_search.db.dbsuper import Database
 
 @pytest.mark.db
 def testDBSuper_Class():
-    """Test the whole class.
-    """
+    """Test the whole class."""
     theDB = Database()
 
     with pytest.raises(NotImplementedError):

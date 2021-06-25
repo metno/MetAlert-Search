@@ -21,11 +21,12 @@ import os
 import yaml
 import logging
 
+from ma_search.common import logException
+
 logger = logging.getLogger(__name__)
 
 class Config():
-    """Main config class wrapping the config yaml file.
-    """
+    """Main config class wrapping the config yaml file."""
 
     def __init__(self):
 
@@ -71,9 +72,9 @@ class Config():
             with open(configFile, mode="r", encoding="utf8") as inFile:
                 self._rawConf = yaml.safe_load(inFile)
             logger.debug("Read config from: %s" % configFile)
-        except Exception as e:
+        except Exception:
             logger.error("Could not read file: %s" % configFile)
-            logger.error(str(e))
+            logException()
             return False
 
         # Read Values
@@ -89,8 +90,7 @@ class Config():
     ##
 
     def _readCoreSettings(self):
-        """Read config values under 'main'.
-        """
+        """Read config values under 'main'."""
         conf = self._rawConf.get("main", {})
 
         self.dbProvider = conf.get("dbProvider", self.dbProvider)
@@ -99,8 +99,7 @@ class Config():
         return
 
     def _readSQLiteSettings(self):
-        """Read config values under 'sqlite'.
-        """
+        """Read config values under 'sqlite'."""
         conf = self._rawConf.get("sqlite", {})
 
         self.sqlitePath = conf.get("sqlitePath", self.sqlitePath)
@@ -108,9 +107,10 @@ class Config():
         return
 
     def _validateConfig(self):
-        """Check config variable dependencies. It needs to be called
-        after all the read functions when all settings have been
-        handled.
+        """Check config variable dependencies.
+
+        This function should be called after all the read functions
+        when all settings have been handled.
 
         Returns
         -------

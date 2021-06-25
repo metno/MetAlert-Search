@@ -28,6 +28,9 @@ from ma_search.db.sqlite import SQLiteDB
 @pytest.mark.db
 def testDBSQLite_Init(tmpConf, tmpDir):
     """Test class initialisation and creation of default DB.
+
+    Should check that the tables are created, but the create functions
+    are tested separately.
     """
     dbFile = os.path.join(tmpDir, "index.db")
 
@@ -63,8 +66,7 @@ def testDBSQLite_Init(tmpConf, tmpDir):
 
 @pytest.mark.db
 def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
-    """Check that the table create functions can handle exceptions.
-    """
+    """Check that the table create functions can handle exceptions."""
     dbFile = os.path.join(tmpDir, "index.db")
 
     tmpConf.dbProvider = "sqlite"
@@ -104,8 +106,7 @@ def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
 
 @pytest.mark.db
 def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
-    """Test MapData table INSERT and UPDATE.
-    """
+    """Test MapData table INSERT and UPDATE."""
     dbFile = os.path.join(tmpDir, "index.db")
 
     tmpConf.dbProvider = "sqlite"

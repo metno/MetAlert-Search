@@ -33,16 +33,16 @@ from ma_search.config import Config # noqa: E402
 
 @pytest.fixture(scope="session")
 def rootDir():
-    """The root folder of the repository.
-    """
+    """The root folder of the repository."""
     return os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 @pytest.fixture(scope="session")
 def tmpDir():
-    """A temporary folder for the test session. This folder is
-    presistent after the tests have run so that the status of generated
-    files can be checked. The folder is instead cleared before a new
-    test session.
+    """A temporary folder for the test session.
+
+    This folder is presistent after the tests have run so that the
+    status of generated files can be checked. The folder is instead
+    cleared before a new test session.
     """
     testDir = os.path.dirname(__file__)
     theDir = os.path.join(testDir, "temp")
@@ -54,8 +54,7 @@ def tmpDir():
 
 @pytest.fixture(scope="session")
 def filesDir():
-    """A path to the reference files folder.
-    """
+    """A path to the reference files folder."""
     testDir = os.path.dirname(__file__)
     theDir = os.path.join(testDir, "files")
     return theDir
@@ -66,8 +65,7 @@ def filesDir():
 
 @pytest.fixture(scope="function")
 def tmpConf(monkeypatch):
-    """Create a temporary configuration object.
-    """
+    """Create a temporary configuration object."""
     theConf = Config()
     confFile = os.path.join(theConf._pkgRoot, "example_config.yaml")
     theConf.readConfig(confFile)
