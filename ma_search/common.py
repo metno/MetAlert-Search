@@ -23,6 +23,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def safeMakeDir(path):
     """Create a folder and return if successful.
 
@@ -50,6 +51,7 @@ def safeMakeDir(path):
         return False
 
     return True
+
 
 def logException():
     """Format and write the last exception to the logger object.

@@ -21,6 +21,7 @@ import pytest
 
 from ma_search.db.dbsuper import Database
 
+
 @pytest.mark.db
 def testDBSuper_Class():
     """Test the whole class."""

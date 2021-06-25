@@ -25,7 +25,8 @@ import pytest
 # Note: This line forces the test suite to import the main package in the current source tree
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
-from ma_search.config import Config # noqa: E402
+from ma_search.config import Config  # noqa: E402
+
 
 ##
 #  Directory Fixtures
@@ -35,6 +36,7 @@ from ma_search.config import Config # noqa: E402
 def rootDir():
     """The root folder of the repository."""
     return os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+
 
 @pytest.fixture(scope="session")
 def tmpDir():
@@ -52,12 +54,14 @@ def tmpDir():
         os.mkdir(theDir)
     return theDir
 
+
 @pytest.fixture(scope="session")
 def filesDir():
     """A path to the reference files folder."""
     testDir = os.path.dirname(__file__)
     theDir = os.path.join(testDir, "files")
     return theDir
+
 
 ##
 #  Objects

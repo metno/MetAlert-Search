@@ -29,6 +29,7 @@ from ma_search.common import logException
 
 logger = logging.getLogger(__name__)
 
+
 class SQLiteDB(Database):
 
     def __init__(self):

@@ -24,7 +24,8 @@ import ma_search
 
 logger = logging.getLogger(__name__)
 
-class Shape(): # pragma: no cover
+
+class Shape():  # pragma: no cover
 
     def __init__(self, uuid):
 

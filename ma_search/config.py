@@ -25,6 +25,7 @@ from ma_search.common import logException
 
 logger = logging.getLogger(__name__)
 
+
 class Config():
     """Main config class wrapping the config yaml file."""
 

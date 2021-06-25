@@ -21,7 +21,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class Data(): # pragma: No cover
+
+class Data():  # pragma: No cover
     pass
 
 # END Class Data

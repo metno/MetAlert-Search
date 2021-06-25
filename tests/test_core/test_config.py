@@ -24,6 +24,7 @@ from tools import causeOSError, writeFile
 
 from ma_search.config import Config
 
+
 @pytest.mark.core
 def testCoreConfig_ReadFile(tmpDir, monkeypatch):
     """Test reading config file."""
@@ -68,6 +69,7 @@ def testCoreConfig_ReadFile(tmpDir, monkeypatch):
     assert theConf._rawConf["groupOne"]["keyFour"] == ["value1", "value2"]
 
 # END Test testCoreConfig_ReadFile
+
 
 @pytest.mark.core
 def testCoreConfig_Validate(tmpDir, caplog):

@@ -26,6 +26,7 @@ from ma_search.config import Config
 __package__ = "ma_search"
 __version__ = "0.0.1"
 
+
 def _initLogging(logObj):
     """Initialise logging and parse environment variables for logging.
 
@@ -68,6 +69,7 @@ def _initLogging(logObj):
 
     return
 
+
 # Logging Setup
 # Must be called before the CONFIG object is created
 logger = logging.getLogger(__name__)
@@ -75,6 +77,7 @@ _initLogging(logger)
 
 # Create a global config object
 CONFIG = Config()
+
 
 def apiMain():
     """This is the main entry point for the api process.

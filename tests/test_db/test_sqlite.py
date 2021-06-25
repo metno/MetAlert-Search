@@ -25,6 +25,7 @@ from datetime import datetime
 
 from ma_search.db.sqlite import SQLiteDB
 
+
 @pytest.mark.db
 def testDBSQLite_Init(tmpConf, tmpDir):
     """Test class initialisation and creation of default DB.
@@ -63,6 +64,7 @@ def testDBSQLite_Init(tmpConf, tmpDir):
     assert not os.path.isfile(dbFile)
 
 # END Test testDBSQLite_Init
+
 
 @pytest.mark.db
 def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
@@ -103,6 +105,7 @@ def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
     assert "No database connection open" in caplog.text
 
 # END Test testDBSQLite_CreateTable
+
 
 @pytest.mark.db
 def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
@@ -212,11 +215,11 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
 
     cursor = theDB._conn.execute("SELECT * FROM MapData;")
     theData = cursor.fetchall()
-    assert theData[0] == ( # Unchanged
+    assert theData[0] == (  # Unchanged
         1, uuidOne, "test label", "test source", "test adm name", "test adm ID",
         "2021-01-01T00:00:00", "2021-12-31T23:59:59", "WGS84", -10.0, -9.0, 8.0, 7.0, 272.0
     )
-    assert theData[1] == ( # Updated
+    assert theData[1] == (  # Updated
         2, uuidTwo, "new label", "new source", "new adm name", "new adm ID",
         "2020-01-01T00:00:00", "2020-12-31T23:59:59", "WGS84", -11.0, -10.0, 7.0, 6.0, 272.0
     )

@@ -27,6 +27,7 @@ from tools import readFile
 
 from ma_search.config import Config
 
+
 @pytest.mark.core
 def testCoreInit_Init():
     """Test the package initialisation."""
@@ -34,6 +35,7 @@ def testCoreInit_Init():
     assert isinstance(ma_search.CONFIG, Config)
 
 # END Test testCoreInit_Init
+
 
 @pytest.mark.core
 def testCoreInit_Logger(tmpDir):
@@ -62,6 +64,7 @@ def testCoreInit_Logger(tmpDir):
     assert readFile(logFile).strip().endswith("Some log message")
 
 # END Test testCoreInit_Logger
+
 
 @pytest.mark.core
 def testCoreInit_ApiMain(monkeypatch, rootDir):

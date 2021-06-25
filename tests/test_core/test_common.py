@@ -24,6 +24,7 @@ from tools import writeFile
 
 from ma_search.common import safeMakeDir
 
+
 @pytest.mark.core
 def testCoreCommon_SafeMakeDir(tmpDir, caplog):
     """Test the safeMakeDir function."""
