@@ -23,6 +23,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 import ma_search
+from ma_search.common import logException
 from shapely.geometry import MultiPolygon, Polygon, mapping, shape
 
 logger = logging.getLogger(__name__)
@@ -162,8 +163,9 @@ class Shape():
             geom = shape(data)
             if not isinstance(geom, (Polygon, MultiPolygon)):
                 raise TypeError("data is not a polygon but %s", type(geom))
-        except Exception as e:
-            logger.error("Not a valid GeoJson(-like) dict. %s: %s", type(e).__name__, e)
+        except Exception:
+            logger.error("Not a valid GeoJson(-like) dict.")
+            logException()
             return None
         return geom
 
@@ -209,7 +211,7 @@ class Shape():
             else:
                 logger.error("UUID %s is not valid", self._uuid)
                 return False
-        except Exception as e:
-            logger.error("%s: %s", type(e).__name__, e)
+        except Exception:
+            logException()
             return False
 # END Class Shape
