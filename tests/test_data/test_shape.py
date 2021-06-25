@@ -105,13 +105,16 @@ def testDataShape_Polygon(tmpConf, tmpDir, caplog):
     tolerance = 50.5
     tolerance_str = str(50_500_000)
     fnjson = (dataPath / f'{uuid}.{tolerance_str}.geojson')
-    (dataPath / f'{uuid}.50.5.geojson').unlink(missing_ok=True)
+    # TODO: replace by saveunlink (missing_ok not available in py3.7)
+    if fnjson.exists():
+        fnjson.unlink()
     result = shape.polygon(tolerance=tolerance)
     assert "Polygon does not exist for tolerance" in caplog.text
 
     # but create it, if cachedOnly=False
     caplog.clear()
-    (dataPath / f'{uuid}.50.5.geojson').unlink(missing_ok=True)
+    if fnjson.exists():
+        fnjson.unlink()
     result = shape.polygon(tolerance=50.5, cachedOnly=False)
     assert "Creating polygon" in caplog.text
     assert fnjson.exists()
