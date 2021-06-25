@@ -47,7 +47,7 @@ class Shape():
 
     @classmethod
     def fromGeoJSON(cls, data):
-        """Returns Shape instance from a GeoJson input file
+        """Returns Shape instance from a GeoJson dict or file
 
         Parameters
         ----------
@@ -78,7 +78,7 @@ class Shape():
     ##
 
     def polygon(self, tolerance=0.0, cachedOnly=True):
-        """Returns the polygon extracted from the geojson file.
+        """Returns the polygon with a given tolerance.
 
         Parameters
         ----------
@@ -133,11 +133,14 @@ class Shape():
 
     @staticmethod
     def polygonFromGeoJson(data):
-        """Returns the polygon extracted from the geojson file.
+        """Returns the polygon extracted from a geojson dict or file.
 
         Parameters
         ----------
-        data : dict or Path or string
+        data : dict or Path or str
+            Input data, either a single GeoJson feature, or only the geometry
+            section of a single feature. If str or Path: Path to the file
+            containing this dict.
 
         Returns
         -------
@@ -199,7 +202,7 @@ class Shape():
     ##
 
     def _validateUuid(self):
-        """Validates that a string is a valid uuid4."""
+        """Validates that a string is a valid uuid."""
         if not isinstance(self._uuid, str):
             logger.error("UUID %s is not a string", self._uuid)
             return False
