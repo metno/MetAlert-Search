@@ -51,6 +51,7 @@ def testCoreConfig_ReadFile(tmpDir, monkeypatch):
         assert theConf.readConfig(configFile=confFile) is False
 
     # Successful raw read
+    theConf._validateConfig = lambda *a: True
     assert theConf.readConfig(configFile=confFile) is True
 
     # Check the values read
@@ -74,6 +75,15 @@ def testCoreConfig_Validate(tmpDir, caplog):
     """Test that the class reads all settings and validates them.
     """
     theConf = Config()
+
+    # Base Settings
+    caplog.clear()
+    theConf.dataPath = None
+    assert theConf._validateConfig() is False
+    assert "Setting 'dataPath' must be a string" in caplog.text
+
+    theConf.dataPath = tmpDir
+    assert theConf._validateConfig() is True
 
     # SQLite Settings
     theConf.dbProvider = "sqlite"

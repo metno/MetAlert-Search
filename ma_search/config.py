@@ -119,17 +119,40 @@ class Config():
         """
         valid = True
 
+        if not self._checkFolderExists(self.dataPath, "dataPath"):
+            self.dataPath = None
+            valid = False
+
         if self.dbProvider == "sqlite":
-            if isinstance(self.sqlitePath, str):
-                if not os.path.isdir(self.sqlitePath):
-                    logger.error("Cannot locate folder: %s" % self.sqlitePath)
-                    self.sqlitePath = None
-                    valid = False
-            else:
-                logger.error("Setting 'sqlitePath' must be a string")
+            if not self._checkFolderExists(self.sqlitePath, "sqlitePath"):
                 self.sqlitePath = None
                 valid = False
 
         return valid
+
+    def _checkFolderExists(self, path, name):
+        """Check if a folder exists.
+
+        Parameters
+        ----------
+        path : str
+            The path to be checked.
+        name : str
+            The setting name for use when reporting an error.
+
+        Returns
+        -------
+        bool
+            True if exists and is a string, False otherwise.
+        """
+        if isinstance(path, str):
+            if os.path.isdir(path):
+                return True
+            else:
+                logger.error("Cannot locate folder: %s" % path)
+                return False
+        else:
+            logger.error("Setting '%s' must be a string" % name)
+            return False
 
 # END Class Config
