@@ -18,8 +18,9 @@ limitations under the License.
 """
 
 import os
-import pytest
 import logging
+
+import pytest
 
 import ma_search
 

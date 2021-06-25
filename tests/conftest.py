@@ -20,6 +20,7 @@ limitations under the License.
 import os
 import sys
 import shutil
+
 import pytest
 
 # Note: This line forces the test suite to import the main package in the current source tree
