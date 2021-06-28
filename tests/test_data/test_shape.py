@@ -22,12 +22,14 @@ from pathlib import Path
 
 import pytest
 import shapely.geometry as geometry
-from ma_search.data.shape import Shape
 from shapely.geometry import MultiPolygon, Polygon
 
+import ma_search as ma
+from ma_search.data.shape import Shape
 
 @pytest.mark.data
 def testDataShape_Init(tmpConf, tmpDir, caplog):
+    """Tests class initialization."""
 
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
@@ -50,13 +52,11 @@ def testDataShape_Init(tmpConf, tmpDir, caplog):
     shape = Shape(uuid)
     assert caplog.text == ""
 
-    # shape._validateUuid4 = lambda: None
-
 @pytest.mark.parametrize("fn",
     ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]) # noqa
 @pytest.mark.data
 def testDataShape_FromGeoJson(fn, tmpConf, tmpDir, caplog, monkeypatch):
-    """ Checks that geojson file is stored and Shape instance is created"""
+    """Checks storing of geojson file and Shape instance creation."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
@@ -72,14 +72,22 @@ def testDataShape_FromGeoJson(fn, tmpConf, tmpDir, caplog, monkeypatch):
     assert shape._path.exists()
 
     # returns None if not valid input
-    monkeypatch.setattr(Shape, "polygonFromGeoJson", lambda x: None)
-    shape = Shape.fromGeoJSON("")
-    assert shape is None
+    with monkeypatch.context() as m:
+        m.setattr(Shape, "polygonFromGeoJson", lambda x: None)
+        shape = Shape.fromGeoJSON("")
+        assert shape is None
+
+    # returns None if file cannot be written
+    with monkeypatch.context() as m:
+        m.setattr(ma.data.shape, "safeWriteJson", lambda *args: False, raising=True)
+        caplog.clear()
+        assert Shape.fromGeoJSON(data) is None
+        assert "Cannot write GeoJson file" in caplog.text
 
 
 @pytest.mark.data
-def testDataShape_Polygon(tmpConf, tmpDir, caplog):
-    """ Checks that geojson file is stored and Shape instance is created"""
+def testDataShape_Polygon(tmpConf, tmpDir, caplog, monkeypatch):
+    """Checks that Polygon is found or created."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
@@ -93,6 +101,11 @@ def testDataShape_Polygon(tmpConf, tmpDir, caplog):
     uuid = '33d0c48f-b58c-4b1a-b224-e93b03393cb3'
     shape = Shape(uuid)
 
+    # check typecheck of tolerance
+    caplog.clear()
+    assert shape.polygon(tolerance="0.c8") is None
+    assert "Tollerance has to be float" in caplog.text
+
     # create file ans see if it is returned:
     path = dataPath / f'{uuid}.geojson'
     with path.open('w') as f:
@@ -100,12 +113,12 @@ def testDataShape_Polygon(tmpConf, tmpDir, caplog):
     result = shape.polygon()
     assert isinstance(result, (Polygon, MultiPolygon))
 
-    # error if it does exist (default)
+    # error if it does not exist (default)
     caplog.clear()
     tolerance = 50.5
     tolerance_str = str(50_500_000)
     fnjson = (dataPath / f'{uuid}.{tolerance_str}.geojson')
-    # TODO: replace by saveunlink (missing_ok not available in py3.7)
+    # `missing_ok` not available >py3.8 so we do this with a if test
     if fnjson.exists():
         fnjson.unlink()
     result = shape.polygon(tolerance=tolerance)
@@ -115,21 +128,42 @@ def testDataShape_Polygon(tmpConf, tmpDir, caplog):
     caplog.clear()
     if fnjson.exists():
         fnjson.unlink()
-    result = shape.polygon(tolerance=50.5, cachedOnly=False)
+    result = shape.polygon(tolerance=tolerance, cachedOnly=False)
     assert "Creating polygon" in caplog.text
     assert fnjson.exists()
 
-    # now it exists -- check that it is loaded
-    shape.polygonFromGeoJson = lambda path: path
-    result = shape.polygon(tolerance=50.5, cachedOnly=False)
-    assert result == fnjson
+    # # now it exists -- check that it is loaded
+    with monkeypatch.context() as m:
+        m.setattr(shape, "polygonFromGeoJson", lambda path: path, raising=True) # args[0] is self
+        shape.polygon(tolerance=50.5, cachedOnly=False) # makes sure file exists
+        result = shape.polygon(tolerance=50.5)
+        assert result == fnjson
 
+    # and errors are catched if issues reading "full" file
+    if fnjson.exists():
+        fnjson.unlink()
+    with monkeypatch.context() as m:
+        m.setattr(shape, "polygonFromGeoJson", lambda path: None, raising=True) # args[0] is self
+        caplog.clear()
+        result = shape.polygon(tolerance=50.5, cachedOnly=False)
+        assert result is None
+        assert "Full polygon cannot be loaded" in caplog.text
+
+    # and errors are catched if issues writing simplified polygon
+    if fnjson.exists():
+        fnjson.unlink()
+    with monkeypatch.context() as m:
+        m.setattr(ma.data.shape, "safeWriteJson", lambda *args: False, raising=True)
+        caplog.clear()
+        result = shape.polygon(tolerance=50.5, cachedOnly=False)
+        assert result is None
+        assert "Cannot write simplified polygon to file" in caplog.text
 
 @pytest.mark.parametrize("fn",
     ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]) # noqa
 @pytest.mark.data
 def testDataShape_ToGeoJson(fn, tmpConf, tmpDir):
-    """ Checks that geojson file is stored and Shape instance is created"""
+    """Checks storing of geojson file and Shape instance creation."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
@@ -153,7 +187,7 @@ def testDataShape_ToGeoJson(fn, tmpConf, tmpDir):
                                        ("simple_Kommuner_291.json", MultiPolygon)])
 @pytest.mark.data
 def testDataShape_PolygonFromGeoJson(file, typ, tmpConf, tmpDir, caplog):
-    """ Checks that geojson file is stored and Shape instance is created"""
+    """Checks storing of geojson file and Polygon creation."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
@@ -195,15 +229,15 @@ def testDataShape_PolygonFromGeoJson(file, typ, tmpConf, tmpDir, caplog):
 
     # Err if path does not exist
     caplog.clear()
-    shape = Shape.polygonFromGeoJson("nopath/to/file")
-    assert "does not exist" in caplog.text
+    assert Shape.polygonFromGeoJson("nopath/to/file") is None
+    assert "Could not read from file" in caplog.text
 
 
 @pytest.mark.parametrize("fn",
     ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]) # noqa
 @pytest.mark.data
 def testDataShape_GeoJsonFromPolygon(fn, tmpConf, tmpDir, caplog):
-    """ Checks that geojson file is stored and Shape instance is created"""
+    """Checks storing of geojson file and Shape instance creation."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
@@ -242,8 +276,7 @@ def testDataShape_GeoJsonFromPolygon(fn, tmpConf, tmpDir, caplog):
      ('33d0c48fb58c4b1ab224e93b03393cb3', False, ""), # missing '-' character
      ('0', False, "ValueError")]) # check catching error
 def testDataShape_ValidateUudi4(uuid, expected, logtext, caplog, tmpConf, tmpDir):
-    """Test that the UUIDs are validated or errors are logged.
-    """
+    """Test that the UUIDs are validated or errors are logged."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath

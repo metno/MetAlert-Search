@@ -17,33 +17,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import json
 import logging
 from pathlib import Path
 from uuid import UUID, uuid4
 
-import ma_search
-from ma_search.common import logException
 from shapely.geometry import MultiPolygon, Polygon, mapping, shape
+
+import ma_search
+from ma_search.common import safeLoadJson, safeWriteJson, logException
 
 logger = logging.getLogger(__name__)
 
 class Shape():
     def __init__(self, uuid):
-        """Keeps track, can lookup and manipulate (Multi)Polygons via their uuid
+        """Lookup and manipulate polygons via their uuid
 
-        Args:
-            uuid (str): Unique identifyer UUID4
+        Parameters
+        ----------
+        uuid : str
+            Unique identifyer UUID4
         """
         self.conf = ma_search.CONFIG
         self._uuid = uuid
         if not self._validateUuid():
             logger.error("UUID %s is not valid", self._uuid)
-            return
+            return None
 
         self._path = (Path(self.conf.dataPath) / self._uuid).with_suffix(".geojson")
         if not self._path.exists():
-            logger.error("UUID file %s does not exist", self._path)
+            logger.error("UUID file %s does not exist.", self._path)
+            return None
+        return None
 
     @classmethod
     def fromGeoJSON(cls, data):
@@ -52,23 +56,24 @@ class Shape():
         Parameters
         ----------
         data : dict or Path or str
-            Input data, either a single GeoJson feature, or only the geometry
-            section of a single feature. If str or Path: Path to the file
-            containing this dict.
+            Input data, either a single GeoJson feature, or only the
+            geometry section of a single feature. If str or Path: Path
+            to the file containing this dict.
 
         Returns
         -------
         :obj:`Shape` or None:
-            A new instance of Shape(). Returns None for invalid input, e.g. not
-            a Polygon.
+            A new instance of Shape(). Returns None for invalid input,
+            e.g. not a Polygon.
         """
         uuid = uuid4()
         if cls.polygonFromGeoJson(data) is None:
-            return None # tests that it
+            return None
 
         path = (ma_search.CONFIG.dataPath / str(uuid)).with_suffix(".geojson")
-        with path.open('w') as f:
-            json.dump(data, f)
+        if not safeWriteJson(path, data):
+            logger.error("Cannot write GeoJson file %s", path)
+            return None
 
         poly = cls(str(uuid))
         return poly
@@ -95,7 +100,10 @@ class Shape():
         :obj:`shapely.Polygon`, :obj:`shapely.MultiPolygon` or None
             Returns shape if it can be found, otherwise None.
         """
-        if tolerance == 0.0:
+        if not isinstance(tolerance, float):
+            logger.error("Tollerance has to be float, but is %s.", type(tolerance))
+            return None
+        elif tolerance == 0.0:
             return self.polygonFromGeoJson(self._path)
         else:
             suffix = f".{round(tolerance * 1e6)}.geojson"
@@ -105,22 +113,33 @@ class Shape():
             if exists:
                 return self.polygonFromGeoJson(path)
             elif cachedOnly:
-                logger.error("Polygon does not exist for tolerance %s", tolerance)
-                return
+                logger.error("Polygon does not exist for tolerance %s.", tolerance)
+                return None
             elif not exists:
-                logger.info("Creating polygon %s with tolerance %s", self._uuid, tolerance)
+                logger.info("Creating polygon %s with tolerance %s.", self._uuid, tolerance)
                 full = self.polygonFromGeoJson(self._path)
+                if full is None:
+                    logger.error("Full polygon cannot be loaded from %s.", self._path)
+                    return None
                 simple = full.simplify(tolerance)
-                with path.open('w') as f:
-                    json.dump(mapping(simple), f)
+                if not safeWriteJson(path, mapping(simple)):
+                    logger.error("Cannot write simplified polygon to file.")
+                    return None
                 return simple
+            else:  # pragma: no cover
+                return None  # not reachable
 
     def toGeoJson(self, **kwargs):
         """Return geometry as as GeoJson
+
         Parameters
         ----------
         kwargs : dict
             kwargs to pass to Shape.polygon()
+
+        Returns
+        -------
+        dict : Geometry as dict in GeoJson format
         """
         geom = mapping(self.polygon(**kwargs))
         geoJson = {"type": "Feature",
@@ -138,9 +157,9 @@ class Shape():
         Parameters
         ----------
         data : dict or Path or str
-            Input data, either a single GeoJson feature, or only the geometry
-            section of a single feature. If str or Path: Path to the file
-            containing this dict.
+            Input data, either a single GeoJson feature, or only the
+            geometry section of a single feature. If str or Path: Path
+            to the file containing this dict.
 
         Returns
         -------
@@ -151,26 +170,25 @@ class Shape():
             pass
         elif isinstance(data, (Path, str)):
             path = Path(data)
-            if not path.exists():
-                logger.error("%s does not exist", path)
+            data = safeLoadJson(path)
+            if data is None:
                 return None
-            with path.open() as f:
-                data = json.load(f)
         else:
-            logger.error("Input has to be dict, Path or string but is of type %s", type(data))
+            logger.error("Input has to be dict, Path or string but is of type %s.", type(data))
             return None
 
         if "geometry" in data:
             data = data["geometry"]
+
         try:
             geom = shape(data)
             if not isinstance(geom, (Polygon, MultiPolygon)):
-                raise TypeError("data is not a polygon but %s", type(geom))
+                raise TypeError("data is not a polygon but %s.", type(geom))
+            return geom
         except Exception:
             logger.error("Not a valid GeoJson(-like) dict.")
             logException()
             return None
-        return geom
 
     @staticmethod
     def geoJsonFromPolygon(polygon, extra={}):
@@ -181,8 +199,8 @@ class Shape():
         polygon : :obj:`shapely.Polygon`, :obj:`shapely.MultiPolygon`
             Shapely object (Polygon).
         extra : dict
-            Additional information to add to the geoJson file by updating the
-            dictionary.
+            Additional information to add to the geoJson file by
+            updating the dictionary.
 
         Returns
         -------
@@ -204,7 +222,7 @@ class Shape():
     def _validateUuid(self):
         """Validates that a string is a valid uuid."""
         if not isinstance(self._uuid, str):
-            logger.error("UUID %s is not a string", self._uuid)
+            logger.error("UUID %s is not a string.", self._uuid)
             return False
 
         try:
@@ -212,7 +230,7 @@ class Shape():
             if str(val) == self._uuid:
                 return True
             else:
-                logger.error("UUID %s is not valid", self._uuid)
+                logger.error("UUID %s is not valid.", self._uuid)
                 return False
         except Exception:
             logException()
