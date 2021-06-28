@@ -19,11 +19,13 @@ limitations under the License.
 
 import os
 import uuid
+
 import pytest
 
 from datetime import datetime
 
 from ma_search.db.sqlite import SQLiteDB
+
 
 @pytest.mark.db
 def testDBSQLite_Init(tmpConf, tmpDir):
@@ -64,6 +66,7 @@ def testDBSQLite_Init(tmpConf, tmpDir):
 
 # END Test testDBSQLite_Init
 
+
 @pytest.mark.db
 def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
     """Check that the table create functions can handle exceptions."""
@@ -103,6 +106,7 @@ def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
     assert "No database connection open" in caplog.text
 
 # END Test testDBSQLite_CreateTable
+
 
 @pytest.mark.db
 def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
@@ -212,11 +216,11 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
 
     cursor = theDB._conn.execute("SELECT * FROM MapData;")
     theData = cursor.fetchall()
-    assert theData[0] == ( # Unchanged
+    assert theData[0] == (  # Unchanged
         1, uuidOne, "test label", "test source", "test adm name", "test adm ID",
         "2021-01-01T00:00:00", "2021-12-31T23:59:59", "WGS84", -10.0, -9.0, 8.0, 7.0, 272.0
     )
-    assert theData[1] == ( # Updated
+    assert theData[1] == (  # Updated
         2, uuidTwo, "new label", "new source", "new adm name", "new adm ID",
         "2020-01-01T00:00:00", "2020-12-31T23:59:59", "WGS84", -11.0, -10.0, 7.0, 6.0, 272.0
     )
@@ -224,7 +228,7 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
     # SQL Error
     # =========
 
-    # Insert: Non-Unique UUID
+    # Insert: Non-unique UUID
     caplog.clear()
     assert theDB.editMapRecord(
         cmd="insert", recordUUID=uuidTwo, label="test label", source="test source",
@@ -232,7 +236,7 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
     ) is False
     assert "UNIQUE constraint failed: MapData.UUID" in caplog.text
 
-    # Update: Set Required to None
+    # Update: Set a required argument to None
     caplog.clear()
     assert theDB.editMapRecord(
         cmd="update", recordUUID=uuidTwo, label=None, source="test source",

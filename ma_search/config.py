@@ -18,12 +18,14 @@ limitations under the License.
 """
 
 import os
-import yaml
 import logging
+
+import yaml
 
 from ma_search.common import logException
 
 logger = logging.getLogger(__name__)
+
 
 class Config():
     """Main config class wrapping the config yaml file."""

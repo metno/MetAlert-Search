@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+
 # File I/O
 
 def readFile(fileName):
@@ -24,10 +25,12 @@ def readFile(fileName):
     with open(fileName, mode="r", encoding="utf8") as inFile:
         return inFile.read()
 
+
 def writeFile(fileName, fileData):
     """Write the contents of a string to a file."""
     with open(fileName, mode="w", encoding="utf8") as outFile:
         outFile.write(fileData)
+
 
 # Exceptions
 

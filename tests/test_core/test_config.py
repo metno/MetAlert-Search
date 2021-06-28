@@ -18,11 +18,13 @@ limitations under the License.
 """
 
 import os
+
 import pytest
 
 from tools import causeOSError, writeFile
 
 from ma_search.config import Config
+
 
 @pytest.mark.core
 def testCoreConfig_ReadFile(tmpDir, monkeypatch):
@@ -68,6 +70,7 @@ def testCoreConfig_ReadFile(tmpDir, monkeypatch):
     assert theConf._rawConf["groupOne"]["keyFour"] == ["value1", "value2"]
 
 # END Test testCoreConfig_ReadFile
+
 
 @pytest.mark.core
 def testCoreConfig_Validate(tmpDir, caplog):

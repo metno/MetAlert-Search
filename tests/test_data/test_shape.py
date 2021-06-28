@@ -27,6 +27,7 @@ from shapely.geometry import MultiPolygon, Polygon
 import ma_search as ma
 from ma_search.data.shape import Shape
 
+
 @pytest.mark.data
 def testDataShape_Init(tmpConf, tmpDir, caplog):
     """Tests class initialization."""

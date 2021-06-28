@@ -19,6 +19,7 @@ limitations under the License.
 
 import json
 import os
+
 import pytest
 
 from pathlib import Path
@@ -26,6 +27,7 @@ from pathlib import Path
 from tools import writeFile, causeOSError
 
 import ma_search.common as co
+
 
 @pytest.mark.core
 def testCoreCommon_SafeMakeDir(tmpDir, caplog):
