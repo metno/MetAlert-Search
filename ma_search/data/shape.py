@@ -28,6 +28,7 @@ from ma_search.common import safeLoadJson, safeWriteJson, logException
 
 logger = logging.getLogger(__name__)
 
+
 class Shape():
     def __init__(self, uuid):
         """Lookup and manipulate polygons via their uuid

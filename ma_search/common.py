@@ -55,6 +55,7 @@ def safeMakeDir(path):
 
     return True
 
+
 def safeWriteString(fn, string, **kwargs):
     """Write data to file and log exceptions.
 
@@ -91,6 +92,7 @@ def safeWriteString(fn, string, **kwargs):
         logException()
         return False
 
+
 def safeWriteJson(fn, data, **kwargs):
     """Write data to a json file and log exceptions.
 
@@ -118,6 +120,7 @@ def safeWriteJson(fn, data, **kwargs):
         logger.error("Could not write to file: %s", fn)
         logException()
         return False
+
 
 def safeLoadString(fn, **kwargs):
     """Load string from file and log exceptions.
@@ -148,6 +151,7 @@ def safeLoadString(fn, **kwargs):
         logException()
         return None
 
+
 def safeLoadJson(fn, **kwargs):
     """Load data from a json file and log exceptions.
 
@@ -170,6 +174,7 @@ def safeLoadJson(fn, **kwargs):
         logger.error("Could not deserialize json from file: %s", fn)
         logException()
         return None
+
 
 def logException():
     """Format and write the last exception to the logger object.
