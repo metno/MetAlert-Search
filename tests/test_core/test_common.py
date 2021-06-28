@@ -88,6 +88,7 @@ def testCoreCommon_SafeWriteString(tmpDir, caplog, monkeypatch):
         assert co.safeWriteString(newFile, string) is False
         assert f"Could not write to file: {newFile}" in caplog.text
 
+
 @pytest.mark.parametrize("data, exp",
                          [("dummy øab", True),
                           (["a", "b"], True),
@@ -103,6 +104,7 @@ def testCoreCommon_safeWriteJson(data, exp, tmpDir, caplog):
     assert co.safeWriteJson(newFile, data) is exp
     if exp is False:
         assert "Could not write to file" in caplog.text
+
 
 @pytest.mark.core
 def testCoreCommon_SafeLoadString(tmpDir, caplog, monkeypatch):
@@ -128,6 +130,7 @@ def testCoreCommon_SafeLoadString(tmpDir, caplog, monkeypatch):
         m.setattr(Path, "read_text", causeOSError)
         assert co.safeLoadString(newFile) is None
         assert f"Could not read from file: {newFile}" in caplog.text
+
 
 @pytest.mark.parametrize("data",
                          ["dummy øab", ["a", "b"], {"a": 5, "b": [1, 2, "s"]}])
