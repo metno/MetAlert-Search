@@ -134,7 +134,7 @@ def testDataShape_Polygon(tmpConf, tmpDir, caplog, monkeypatch):
     assert "Creating polygon" in caplog.text
     assert fnjson.exists()
 
-    # # now it exists -- check that it is loaded
+    # now it exists -- check that it is loaded
     with monkeypatch.context() as m:
         m.setattr(shape, "polygonFromGeoJson", lambda path: path, raising=True)
         shape.polygon(tolerance=50.5, cachedOnly=False)  # makes sure file exists
