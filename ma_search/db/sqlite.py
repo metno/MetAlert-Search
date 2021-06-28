@@ -71,7 +71,7 @@ class SQLiteDB(Database):
             The command to be run on the database. Must be either "insert" or
             "update".
         recordUUID : str
-            The UUID of the dataset to be added.
+            The UUID of the dataset to be added or modified.
         label : str
             A user-defined label for the record.
         source : str

@@ -228,7 +228,7 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
     # SQL Error
     # =========
 
-    # Insert: Non-Unique UUID
+    # Insert: Non-unique UUID
     caplog.clear()
     assert theDB.editMapRecord(
         cmd="insert", recordUUID=uuidTwo, label="test label", source="test source",
@@ -236,7 +236,7 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
     ) is False
     assert "UNIQUE constraint failed: MapData.UUID" in caplog.text
 
-    # Update: Set Required to None
+    # Update: Set a required argument to None
     caplog.clear()
     assert theDB.editMapRecord(
         cmd="update", recordUUID=uuidTwo, label=None, source="test source",
