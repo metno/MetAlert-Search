@@ -1,5 +1,5 @@
 """
-MetAlert Search : Test Tools
+MetAlert Search : Data Tests
 ============================
 
 Copyright 2021 MET Norway
@@ -17,25 +17,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import pytest
 
-# File I/O
-
-def readFile(fileName):
-    """Returns the content of a file as a string."""
-    with open(fileName, mode="r", encoding="utf8") as inFile:
-        return inFile.read()
+from ma_search.data.shape import Shape
 
 
-def writeFile(fileName, fileData):
-    """Write the contents of a string to a file."""
-    with open(fileName, mode="w", encoding="utf8") as outFile:
-        outFile.write(fileData)
+@pytest.mark.data
+def testDataShape_Init():
+    shape = Shape("")
+    assert isinstance(shape, Shape)
 
-
-# Exceptions
-
-def causeOSError(*args, **kwargs):
-    """This function will take any arguments and always raise an
-    OSError when called.
-    """
-    raise OSError("Test OSError")
+# END Test testDataShape_Init

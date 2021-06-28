@@ -1,5 +1,6 @@
 main:
   dbProvider: sqlite
+  dataPath: null
 
 sqlite:
   sqlitePath: null

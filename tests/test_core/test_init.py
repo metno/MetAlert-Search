@@ -18,8 +18,9 @@ limitations under the License.
 """
 
 import os
-import pytest
 import logging
+
+import pytest
 
 import ma_search
 
@@ -27,19 +28,19 @@ from tools import readFile
 
 from ma_search.config import Config
 
+
 @pytest.mark.core
 def testCoreInit_Init():
-    """Test the package initialisation.
-    """
+    """Test the package initialisation."""
     assert ma_search.__version__
     assert isinstance(ma_search.CONFIG, Config)
 
 # END Test testCoreInit_Init
 
+
 @pytest.mark.core
 def testCoreInit_Logger(tmpDir):
-    """Test the logger initialisation.
-    """
+    """Test the logger initialisation."""
     os.environ["MA_SEARCH_LOGLEVEL"] = "DEBUG"
     logger = logging.getLogger(__name__)
     ma_search._initLogging(logger)
@@ -65,9 +66,12 @@ def testCoreInit_Logger(tmpDir):
 
 # END Test testCoreInit_Logger
 
+
 @pytest.mark.core
 def testCoreInit_ApiMain(monkeypatch, rootDir):
-    """Test the API entry point function
+    """Test the API entry point function.
+
+    Note: Not yet complete as the API class has not been added.
     """
     # class mockAPI():
     #     def __init__(self):
