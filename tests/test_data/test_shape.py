@@ -35,20 +35,16 @@ def testDataShape_Init(tmpConf, tmpDir, caplog):
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
 
-    # initialization runs
-    shape = Shape("")
-    shape._validateUuid4 = lambda: None
-
     # check error if file does not exist
     caplog.clear()
     uuid = "33d0c48f-b58c-4b1a-b224-e93b03393cb3"
-    shape = Shape(uuid)
+    Shape(uuid)
     assert "does not exist" in caplog.text
 
     # but runs if it exists
     Path(dataPath/uuid).with_suffix(".geojson").touch()
     caplog.clear()
-    shape = Shape(uuid)
+    Shape(uuid)
     assert caplog.text == ""
 
 
