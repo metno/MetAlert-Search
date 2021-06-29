@@ -286,7 +286,7 @@ def testDataShape_GeoJsonFromPolygon(fn, tmpConf, tmpDir, filesDir, caplog):
         ("0", False, "ValueError")  # check catching error
     ]
 )
-def testDataShape_ValidateUudi(uuid, expected, logtext, caplog, tmpConf, tmpDir):
+def testDataShape_ValidateUUID(uuid, expected, logtext, caplog, tmpConf, tmpDir):
     """Test that the UUIDs are validated or errors are logged."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
