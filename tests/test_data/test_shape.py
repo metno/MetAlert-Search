@@ -275,10 +275,10 @@ def testDataShape_GeoJsonFromPolygon(fn, tmpConf, tmpDir, caplog):
 @pytest.mark.data
 @pytest.mark.parametrize("uuid,expected,logtext",
     [(None, False, "is not a string"), # noqa # not a string
-     ('33d0c48f-b58c-4b1a-b224-e93b03393cb3', True, ""),  # gen by uuid4
-     ('33d0c48fb58c4b1ab224e93b03393cb3', False, ""),  # missing '-' character
-     ('0', False, "ValueError")])  # check catching error
-def testDataShape_ValidateUudi4(uuid, expected, logtext, caplog, tmpConf, tmpDir):
+     ("33d0c48f-b58c-4b1a-b224-e93b03393cb3", True, ""),  # gen by uuid4
+     ("33d0c48fb58c4b1ab224e93b03393cb3", False, ""),  # missing '-' character
+     ("0", False, "ValueError")])  # check catching error
+def testDataShape_ValidateUudi(uuid, expected, logtext, caplog, tmpConf, tmpDir):
     """Test that the UUIDs are validated or errors are logged."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
@@ -291,4 +291,3 @@ def testDataShape_ValidateUudi4(uuid, expected, logtext, caplog, tmpConf, tmpDir
     assert result == expected
     if not result:
         assert logtext in caplog.text
-# END Test testDataShape_Init
