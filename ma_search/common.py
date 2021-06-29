@@ -164,7 +164,7 @@ def safeLoadJson(fn, **kwargs):
 
     Returns
     -------
-    object
+    :obj:`object`
         Data from json file if successful, otherwise None.
     """
     try:

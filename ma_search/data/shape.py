@@ -206,6 +206,7 @@ class Shape():
         Returns
         -------
         dict
+            GeoJson dict
         """
         geoJson = {"type": "Feature",
                    "geometry": mapping(polygon)}
