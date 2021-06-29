@@ -30,8 +30,7 @@ from ma_search.data.shape import Shape
 
 @pytest.mark.data
 def testDataShape_Init(tmpConf, tmpDir, caplog):
-    """Tests class initialization."""
-
+    """Tests class initialisation."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
@@ -39,11 +38,10 @@ def testDataShape_Init(tmpConf, tmpDir, caplog):
     # initialization runs
     shape = Shape("")
     shape._validateUuid4 = lambda: None
-    assert isinstance(shape, Shape)
 
     # check error if file does not exist
     caplog.clear()
-    uuid = '33d0c48f-b58c-4b1a-b224-e93b03393cb3'
+    uuid = "33d0c48f-b58c-4b1a-b224-e93b03393cb3"
     shape = Shape(uuid)
     assert "does not exist" in caplog.text
 
@@ -54,16 +52,17 @@ def testDataShape_Init(tmpConf, tmpDir, caplog):
     assert caplog.text == ""
 
 
-@pytest.mark.parametrize("fn",
-    ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]) # noqa
+@pytest.mark.parametrize(
+    "fn", ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]
+)
 @pytest.mark.data
-def testDataShape_FromGeoJson(fn, tmpConf, tmpDir, caplog, monkeypatch):
+def testDataShape_FromGeoJson(fn, tmpConf, tmpDir, filesDir, caplog, monkeypatch):
     """Checks storing of geojson file and Shape instance creation."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
 
-    fn = Path("tests/test_data/data") / fn
+    fn = Path(filesDir) / fn
     with fn.open() as f:
         data = json.load(f)
         data = data["polygon"]
@@ -88,25 +87,25 @@ def testDataShape_FromGeoJson(fn, tmpConf, tmpDir, caplog, monkeypatch):
 
 
 @pytest.mark.data
-def testDataShape_Polygon(tmpConf, tmpDir, caplog, monkeypatch):
+def testDataShape_Polygon(tmpConf, tmpDir, caplog, filesDir, monkeypatch):
     """Checks that Polygon is found or created."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
 
     fn = "simple_Fylker_0.json"
-    fn = Path("tests/test_data/data") / fn
+    fn = Path(filesDir) / fn
     with fn.open() as f:
         data = json.load(f)
         data = data["polygon"]
 
-    uuid = '33d0c48f-b58c-4b1a-b224-e93b03393cb3'
+    uuid = "33d0c48f-b58c-4b1a-b224-e93b03393cb3"
     shape = Shape(uuid)
 
     # check typecheck of tolerance
     caplog.clear()
     assert shape.polygon(tolerance="0.c8") is None
-    assert "Tollerance has to be float" in caplog.text
+    assert "Tolerance has to be float" in caplog.text
 
     # create file ans see if it is returned:
     path = dataPath / f'{uuid}.geojson'
@@ -119,8 +118,8 @@ def testDataShape_Polygon(tmpConf, tmpDir, caplog, monkeypatch):
     caplog.clear()
     tolerance = 50.5
     tolerance_str = str(50_500_000)
-    fnjson = (dataPath / f'{uuid}.{tolerance_str}.geojson')
-    # `missing_ok` not available >py3.8 so we do this with a if test
+    fnjson = (dataPath / f"{uuid}.{tolerance_str}.geojson")
+    # `missing_ok` not available >py3.8 so we do this with an if test
     if fnjson.exists():
         fnjson.unlink()
     result = shape.polygon(tolerance=tolerance)
@@ -162,16 +161,17 @@ def testDataShape_Polygon(tmpConf, tmpDir, caplog, monkeypatch):
         assert "Cannot write simplified polygon to file" in caplog.text
 
 
-@pytest.mark.parametrize("fn",
-    ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]) # noqa
+@pytest.mark.parametrize(
+    "fn", ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]
+)
 @pytest.mark.data
-def testDataShape_ToGeoJson(fn, tmpConf, tmpDir):
+def testDataShape_ToGeoJson(fn, tmpConf, tmpDir, filesDir):
     """Checks storing of geojson file and Shape instance creation."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
 
-    fn = Path("tests/test_data/data") / fn
+    fn = Path(filesDir) / fn
     with fn.open() as f:
         data = json.load(f)
         data = data["polygon"]
@@ -185,21 +185,25 @@ def testDataShape_ToGeoJson(fn, tmpConf, tmpDir):
     assert result == expected
 
 
-@pytest.mark.parametrize("file, typ", [("simple_Fylker_0.json", Polygon),
-                                       ("simple_Kommuner_0.json", Polygon),
-                                       ("simple_Kommuner_291.json", MultiPolygon)])
+@pytest.mark.parametrize(
+    "fname, typ", [
+        ("simple_Fylker_0.json", Polygon),
+        ("simple_Kommuner_0.json", Polygon),
+        ("simple_Kommuner_291.json", MultiPolygon)
+    ]
+)
 @pytest.mark.data
-def testDataShape_PolygonFromGeoJson(file, typ, tmpConf, tmpDir, caplog):
+def testDataShape_PolygonFromGeoJson(fname, typ, tmpConf, tmpDir, filesDir, caplog):
     """Checks storing of geojson file and Polygon creation."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
 
-    fn = Path("tests/test_data/data") / file
+    fn = Path(filesDir) / fname
     with fn.open() as f:
         data = json.load(f)
         data = data["polygon"]
-        fn_geodata = dataPath / file
+        fn_geodata = dataPath / fname
         with fn_geodata.open('w') as f:
             json.dump(data, f)
 
@@ -236,16 +240,17 @@ def testDataShape_PolygonFromGeoJson(file, typ, tmpConf, tmpDir, caplog):
     assert "Could not read from file" in caplog.text
 
 
-@pytest.mark.parametrize("fn",
-    ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]) # noqa
+@pytest.mark.parametrize(
+    "fn", ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]
+)
 @pytest.mark.data
-def testDataShape_GeoJsonFromPolygon(fn, tmpConf, tmpDir, caplog):
+def testDataShape_GeoJsonFromPolygon(fn, tmpConf, tmpDir, filesDir, caplog):
     """Checks storing of geojson file and Shape instance creation."""
     dataPath = Path(tmpDir) / "data"
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
 
-    fn = Path("tests/test_data/data") / fn
+    fn = Path(filesDir) / fn
     with fn.open() as f:
         data = json.load(f)
         data = data["polygon"]
@@ -273,11 +278,14 @@ def testDataShape_GeoJsonFromPolygon(fn, tmpConf, tmpDir, caplog):
 
 
 @pytest.mark.data
-@pytest.mark.parametrize("uuid,expected,logtext",
-    [(None, False, "is not a string"), # noqa # not a string
-     ("33d0c48f-b58c-4b1a-b224-e93b03393cb3", True, ""),  # gen by uuid4
-     ("33d0c48fb58c4b1ab224e93b03393cb3", False, ""),  # missing '-' character
-     ("0", False, "ValueError")])  # check catching error
+@pytest.mark.parametrize(
+    "uuid,expected,logtext", [
+        (None, False, "is not a string"),  # not a string
+        ("33d0c48f-b58c-4b1a-b224-e93b03393cb3", True, ""),  # gen by uuid4
+        ("33d0c48fb58c4b1ab224e93b03393cb3", False, ""),  # missing '-' character
+        ("0", False, "ValueError")  # check catching error
+    ]
+)
 def testDataShape_ValidateUudi(uuid, expected, logtext, caplog, tmpConf, tmpDir):
     """Test that the UUIDs are validated or errors are logged."""
     dataPath = Path(tmpDir) / "data"
