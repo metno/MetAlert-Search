@@ -50,7 +50,7 @@ def safeMakeDir(path):
     try:
         os.mkdir(path)
     except Exception:
-        logger.error("Could not create: %s" % str(path))
+        logger.error("Could not create: %s", str(path))
         logException()
         return False
 
@@ -172,7 +172,7 @@ def safeLoadJson(fn, **kwargs):
         string = safeLoadString(fn)
         return json.loads(string, **kwargs)
     except Exception:
-        logger.error("Could not deserialize json from file: %s", fn)
+        logger.error("Could not deserialise json from file: %s", fn)
         logException()
         return None
 
@@ -198,7 +198,7 @@ def checkUUID(value):
     Returns
     -------
     str or None
-        Returns a proper formatted UUID string, or None if invalid
+        Returns a proper formatted UUID string, or None if invalid.
     """
     if not isinstance(value, str):
         logger.error("The UUID must be a string")
@@ -207,6 +207,6 @@ def checkUUID(value):
     try:
         return str(uuid.UUID(value))
     except Exception:
-        logger.error("Could not parse '%s' as an UUID", str(value))
+        logger.error("Could not parse '%s' as a UUID", str(value))
         logException()
         return None
