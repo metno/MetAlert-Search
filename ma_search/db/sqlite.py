@@ -18,14 +18,13 @@ limitations under the License.
 """
 
 import os
-import uuid
 import sqlite3
 import logging
 
 from datetime import datetime
 
 from ma_search.db.dbsuper import Database
-from ma_search.common import logException
+from ma_search.common import logException, checkUUID
 
 logger = logging.getLogger(__name__)
 
@@ -99,11 +98,9 @@ class SQLiteDB(Database):
         admID = None
         valid = True
 
-        try:
-            pUUID = str(uuid.UUID(recordUUID))
-        except Exception:
+        pUUID = checkUUID(recordUUID)
+        if pUUID is None:
             logger.error("The UUID '%s' is not valid" % str(recordUUID))
-            logException()
             valid = False
 
         if not (-90.0 <= south < north <= 90.0):

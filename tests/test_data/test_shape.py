@@ -18,13 +18,13 @@ limitations under the License.
 """
 
 import json
+import pytest
 from pathlib import Path
 
-import pytest
 import shapely.geometry as geometry
 from shapely.geometry import MultiPolygon, Polygon
 
-import ma_search as ma
+import ma_search
 from ma_search.data.shape import Shape
 
 
@@ -35,7 +35,12 @@ def testDataShape_Init(tmpConf, tmpDir, caplog):
     dataPath.mkdir(exist_ok=True)
     tmpConf.dataPath = dataPath
 
-    # check error if file does not exist
+    # Check error if invalid UUID
+    caplog.clear()
+    Shape(None)
+    assert "UUID 'None' is not valid" in caplog.text
+
+    # Check error if file does not exist
     caplog.clear()
     uuid = "33d0c48f-b58c-4b1a-b224-e93b03393cb3"
     Shape(uuid)
@@ -46,6 +51,8 @@ def testDataShape_Init(tmpConf, tmpDir, caplog):
     caplog.clear()
     Shape(uuid)
     assert caplog.text == ""
+
+# END Test testDataShape_Init
 
 
 @pytest.mark.parametrize(
@@ -76,10 +83,12 @@ def testDataShape_FromGeoJson(fn, tmpConf, tmpDir, filesDir, caplog, monkeypatch
 
     # returns None if file cannot be written
     with monkeypatch.context() as m:
-        m.setattr(ma.data.shape, "safeWriteJson", lambda *args: False, raising=True)
+        m.setattr(ma_search.data.shape, "safeWriteJson", lambda *args: False, raising=True)
         caplog.clear()
         assert Shape.fromGeoJSON(data) is None
         assert "Cannot write GeoJson file" in caplog.text
+
+# END Test testDataShape_FromGeoJson
 
 
 @pytest.mark.data
@@ -150,11 +159,13 @@ def testDataShape_Polygon(tmpConf, tmpDir, caplog, filesDir, monkeypatch):
     if fnjson.exists():
         fnjson.unlink()
     with monkeypatch.context() as m:
-        m.setattr(ma.data.shape, "safeWriteJson", lambda *args: False, raising=True)
+        m.setattr(ma_search.data.shape, "safeWriteJson", lambda *args: False, raising=True)
         caplog.clear()
         result = shape.polygon(tolerance=50.5, cachedOnly=False)
         assert result is None
         assert "Cannot write simplified polygon to file" in caplog.text
+
+# END Test testDataShape_Polygon
 
 
 @pytest.mark.parametrize(
@@ -179,6 +190,8 @@ def testDataShape_ToGeoJson(fn, tmpConf, tmpDir, filesDir):
     # hacky comparison, but convert tuples to lists
     result = eval(result.__repr__().replace("(", "[").replace(")", "]"))
     assert result == expected
+
+# END Test testDataShape_ToGeoJson
 
 
 @pytest.mark.parametrize(
@@ -235,6 +248,8 @@ def testDataShape_PolygonFromGeoJson(fname, typ, tmpConf, tmpDir, filesDir, capl
     assert Shape.polygonFromGeoJson("nopath/to/file") is None
     assert "Could not read from file" in caplog.text
 
+# END Test testDataShape_PolygonFromGeoJson
+
 
 @pytest.mark.parametrize(
     "fn", ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]
@@ -272,26 +287,4 @@ def testDataShape_GeoJsonFromPolygon(fn, tmpConf, tmpDir, filesDir, caplog):
     assert result == expected
     assert "Cannot append" in caplog.text
 
-
-@pytest.mark.data
-@pytest.mark.parametrize(
-    "uuid,expected,logtext", [
-        (None, False, "is not a string"),  # not a string
-        ("33d0c48f-b58c-4b1a-b224-e93b03393cb3", True, ""),  # gen by uuid4
-        ("33d0c48fb58c4b1ab224e93b03393cb3", False, ""),  # missing '-' character
-        ("0", False, "ValueError")  # check catching error
-    ]
-)
-def testDataShape_ValidateUUID(uuid, expected, logtext, caplog, tmpConf, tmpDir):
-    """Test that the UUIDs are validated or errors are logged."""
-    dataPath = Path(tmpDir) / "data"
-    dataPath.mkdir(exist_ok=True)
-    tmpConf.dataPath = dataPath
-
-    shape = Shape(uuid)
-    caplog.clear()
-
-    result = shape._validateUuid()
-    assert result == expected
-    if not result:
-        assert logtext in caplog.text
+# END Test testDataShape_GeoJsonFromPolygon
