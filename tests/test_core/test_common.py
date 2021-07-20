@@ -105,7 +105,7 @@ def testCoreCommon_safeWriteJson(data, exp, tmpDir, caplog):
     """Test the safeWriteJson function."""
     newFile = Path(tmpDir) / "file.txt"
 
-    # check execution
+    # Check execution
     caplog.clear()
     assert safeWriteJson(newFile, data) is exp
     if exp is False:
@@ -146,11 +146,11 @@ def testCoreCommon_safeLoadJson(data, tmpDir, caplog):
     with newFile.open("w", encoding="UTF-8") as f:
         json.dump(data, f)
 
-    # check execution
+    # Check execution
     caplog.clear()
     assert safeLoadJson(newFile) == data
 
-    # catch exceptions -- string is not json conform
+    # Catch exceptions: string is not json conform
     string = "[{,,]."
     newFile.write_text(string)
     caplog.clear()
