@@ -155,7 +155,7 @@ def testCoreCommon_safeLoadJson(data, tmpDir, caplog):
     newFile.write_text(string)
     caplog.clear()
     assert safeLoadJson(newFile) is None
-    assert f"Could not deserialize json from file: {newFile}" in caplog.text
+    assert f"Could not deserialise json from file: {newFile}" in caplog.text
     assert "JSONDecodeError" in caplog.text
 
 # END Test testCoreCommon_SafeMakeDir
