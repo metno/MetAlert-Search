@@ -47,6 +47,10 @@ class Config():
         # SQLite Settings
         self.sqlitePath = None
 
+        # Automatic Settings
+        self.mapData = None
+        self.mapCache = None
+
         return
 
     def readConfig(self, configFile=None):
@@ -97,6 +101,10 @@ class Config():
 
         self.dbProvider = conf.get("dbProvider", self.dbProvider)
         self.dataPath = conf.get("dataPath", self.dataPath)
+
+        if isinstance(self.dataPath, str):
+            self.mapData = os.path.join(self.dataPath, "mapdata")
+            self.mapCache = os.path.join(self.dataPath, "mapcache")
 
         return
 
