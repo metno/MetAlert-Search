@@ -31,19 +31,18 @@ def feature_dict(entry):
     """ Template dictionary for JSON feature from TED entry"""
     corners = [*entry["corners"], entry["corners"][0]] # create Linear Ring
     feature = {
-    "type": "Feature",
-    "geometry": {
-        "type": "Polygon",
-        "coordinates": [corners]
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [corners]
         },
-    "properties": {
-        "name": entry["name"],
-        "ted-id": entry["id"],
-        "description": entry["type"]
+        "properties": {
+            "name": entry["name"],
+            "ted-id": entry["id"],
+            "description": entry["type"]
         }
     }
     return feature
-
 
 class TEDImporter():
     """
@@ -61,9 +60,9 @@ class TEDImporter():
         try:
             # providing an arb. unknown user gives read-access
             gate = mysql.connector.connect(user='metsearch', password='',
-                                        host='ted-b',
-                                        database='ted',
-                                        charset='utf8')
+                                           host='ted-b',
+                                           database='ted',
+                                           charset='utf8')
             self._cursor = gate.cursor()
             self.ted_ids = np.loadtxt(fn_tedid, delimiter=":", dtype=str)
             areas = self.ted_to_geojson()
@@ -89,14 +88,11 @@ class TEDImporter():
         [self.apply_fun_to_dictkey(d, fun=self.ted_coords_to_lonlat, key="corners") for d in areas]
 
         features = [feature_dict(area) for area in areas]
-        collection = {
-        "type": "FeatureCollection",
-        "features": features
-        }
+        collection = {"type": "FeatureCollection",
+                      "features": features}
         if properties is not None:
             collection["properties"] = properties
         return collection
-
 
     def get_elements(self):
         """Get elements from database

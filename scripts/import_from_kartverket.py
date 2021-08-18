@@ -23,13 +23,11 @@ import dataclasses
 from dataclasses import dataclass, field
 import datetime
 from pathlib import Path
-from typing import List, Union, Optional
-from shapely.geometry import Polygon, MultiPolygon, mapping
+from typing import List, Union
+from shapely.geometry import mapping
 
 import dateutil.parser as dtparser
 import geopandas as gpd
-import pandas as pd
-import matplotlib.pyplot as plt
 
 
 logging.basicConfig(level="INFO")
@@ -72,13 +70,12 @@ def get_kartverket_data(what, fn, crs_in, crs_out="epsg:4326"):
     base_key = next(iter(data)).split(".")[0]
     # data = geopandas.read_file(fn) # doesn't work due to complexity
     df = gpd.GeoDataFrame.from_features(data[f'{base_key}.{what}']['features'],
-         crs=crs_in)
+                                        crs=crs_in)
     df = df.to_crs(crs_out)
     # gather to Multipolygon by kommune/fylke number if necessary
     df = df.dissolve(by=number_str, as_index=False)
     df["administrativeName"] = df["navn"].apply(pd_convert_nested_name)
     df["administrativeID"] = df[number_str]
-
 
     return df
 
@@ -145,28 +142,31 @@ if __name__ == "__main__":
 
     # Kommuner
     items = {
-             "Kommune": [{"name":"Kommuner", "from": "2021", "to": ""},
-                        {"name":"Kommuner2020", "from": "2019", "to": "2020"},
-                        {"name":"Kommuner2019", "from": "2019", "to": "2020"}],
-             "Fylke": [{"name":"Fylker", "from": "2021", "to": ""},
-                       {"name":"Fylker2020", "from": "2019", "to": "2020"},
-                       {"name":"Fylker2019", "from": "2019", "to": "2020"}]
-            }
+        "Kommune": [
+            {"name": "Kommuner", "from": "2021", "to": ""},
+            {"name": "Kommuner2020", "from": "2019", "to": "2020"},
+            {"name": "Kommuner2019", "from": "2019", "to": "2020"}
+        ],
+        "Fylke": [
+            {"name": "Fylker", "from": "2021", "to": ""},
+            {"name": "Fylker2020", "from": "2019", "to": "2020"},
+            {"name": "Fylker2019", "from": "2019", "to": "2020"}
+        ]
+    }
     for key, vals in items.items():
         for item in vals:
             entry = Sources(fn_in=(datadir
-                                   /f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson"),
+                                   / f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson"),
                             fn_out=outdir/f"test_{item['name']}",
                             valid_from = item["from"],
                             valid_to = item["to"],
-                            crs_in="EPSG:25833", #`EUREF89 UTM sone 33, 2d`
+                            crs_in="EPSG:25833", # `EUREF89 UTM sone 33, 2d`
                             source="kartverket",
                             labels=key)
             data = get_kartverket_data(what=key.lower(), fn=entry.fn_in, crs_in=entry.crs_in)
 
             # TODO: convert shapely geometry to dict [only necessary for wr to file?]
             data["geometry"] = data["geometry"].apply(mapping)
-
 
             for key, val in dataclasses.asdict(entry).items():
                 if key not in map_to_db:
@@ -175,7 +175,7 @@ if __name__ == "__main__":
                     raise NotImplementedError(f"Key {key} would be overwritten")
                 data[key] = val
 
-             # Note: removes additional attributes
+            # Note: removes additional attributes
             data = data.filter(map_to_db.keys())
             data = data.rename(columns=map_to_db, errors="raise")
 
