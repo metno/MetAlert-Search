@@ -42,11 +42,12 @@ def get_kartverket_data(what, fn, crs_in, crs_out="epsg:4326"):
     https://www.kartverket.no/api-og-data/grensedata
 
     Note:
-        - The script assumes that one downloads the data as geoJSON. Due to
-          limitations at the time of testing, it had to be downloaded as in
-          the projection `EUREF89 UTM sone 33, 2d`, which corresponds to `EPSG
-          code 25833`.
-        - For historical data, see `Administrative enheter - historiske versjoner` at geonorge.
+        - The script assumes that one downloads the data as geoJSON. Due
+          to limitations at the time of testing, it had to be downloaded
+          as in the projection `EUREF89 UTM sone 33, 2d`, which
+          corresponds to `EPSG code 25833`.
+        - For historical data, see
+          `Administrative enheter - historiske versjoner` at geonorge.
 
     Args:
         what (str): What information to get. Has to be in
@@ -90,6 +91,7 @@ def jsondefault(o):
     if isinstance(o, (datetime.date, datetime.datetime)):
         return o.isoformat()
 
+
 def dump_data(data, fn='kartdata.json', **kwargs):
     kwargs.setdefault("default", jsondefault)
     kwargs.setdefault("ensure_ascii", False)
@@ -101,6 +103,7 @@ def load_data(fn='kartdata.json'):
     with open(fn) as f:
         data = json.load(f)
     return data
+
 
 @dataclass
 class Sources:
@@ -123,6 +126,7 @@ class Sources:
         if isinstance(self.valid_to, str):
             self.valid_to = "" if self.valid_to == "" else dtparser.parse(self.valid_to)
 
+
 map_to_db_inv = {
     "label": "labels",
     "source": "source",
@@ -133,7 +137,10 @@ map_to_db_inv = {
     "polygon": "geometry",
     "coordinateSystem": "crs_out",
 }
+
+
 map_to_db = {v: k for k, v in map_to_db_inv.items()}
+
 
 if __name__ == "__main__":
     datadir = Path("scripts/kartverket_data")
@@ -158,9 +165,9 @@ if __name__ == "__main__":
             entry = Sources(fn_in=(datadir
                                    / f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson"),
                             fn_out=outdir/f"test_{item['name']}",
-                            valid_from = item["from"],
-                            valid_to = item["to"],
-                            crs_in="EPSG:25833", # `EUREF89 UTM sone 33, 2d`
+                            valid_from=item["from"],
+                            valid_to=item["to"],
+                            crs_in="EPSG:25833",  # `EUREF89 UTM sone 33, 2d`
                             source="kartverket",
                             labels=key)
             data = get_kartverket_data(what=key.lower(), fn=entry.fn_in, crs_in=entry.crs_in)

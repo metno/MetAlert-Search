@@ -27,9 +27,10 @@ import numpy as np
 
 logging.basicConfig(level="INFO")
 
+
 def feature_dict(entry):
     """ Template dictionary for JSON feature from TED entry"""
-    corners = [*entry["corners"], entry["corners"][0]] # create Linear Ring
+    corners = [*entry["corners"], entry["corners"][0]]  # create Linear Ring
     feature = {
         "type": "Feature",
         "geometry": {
@@ -43,6 +44,7 @@ def feature_dict(entry):
         }
     }
     return feature
+
 
 class TEDImporter():
     """
@@ -179,6 +181,7 @@ class TEDImporter():
         ax = df.plot(figsize=(10, 10), alpha=0.5, edgecolor='k')
         ctx.add_basemap(ax, crs=df.crs)
         plt.show()
+
 
 def main():
     """Import polygons from TED [and dump as geoJSON]
