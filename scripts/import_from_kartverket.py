@@ -151,12 +151,12 @@ if __name__ == "__main__":
     items = {
         "Kommune": [
             {"name": "Kommuner", "from": "2021", "to": ""},
-            {"name": "Kommuner2020", "from": "2019", "to": "2020"},
+            {"name": "Kommuner2020", "from": "2020", "to": "2021"},
             {"name": "Kommuner2019", "from": "2019", "to": "2020"}
         ],
         "Fylke": [
             {"name": "Fylker", "from": "2021", "to": ""},
-            {"name": "Fylker2020", "from": "2019", "to": "2020"},
+            {"name": "Fylker2020", "from": "2020", "to": "2021"},
             {"name": "Fylker2019", "from": "2019", "to": "2020"}
         ]
     }
