@@ -162,8 +162,8 @@ if __name__ == "__main__":
     }
     for key, vals in items.items():
         for item in vals:
-            entry = Sources(fn_in=(datadir
-                                   / f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson"),
+            fn = f"Basisdata_0000_Norge_25833_{item['name']}_GEOJSON.geojson"
+            entry = Sources(fn_in=(datadir/fn),
                             fn_out=outdir/f"test_{item['name']}",
                             valid_from=item["from"],
                             valid_to=item["to"],
