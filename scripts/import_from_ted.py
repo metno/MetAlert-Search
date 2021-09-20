@@ -26,6 +26,8 @@ from re import finditer
 import mysql.connector
 import numpy as np
 
+logging.basicConfig(level="INFO")
+
 
 def feature_dict(entry):
     """Template dictionary for JSON feature from TED entry"""

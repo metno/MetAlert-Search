@@ -31,6 +31,8 @@ from shapely.geometry import mapping
 import dateutil.parser as dtparser
 import geopandas as gpd
 
+logging.basicConfig(level="INFO")
+
 
 def get_kartverket_data(what, fn, crs_in, crs_out="epsg:4326"):
     """Transform Kartverket polygon data for Kommuner/Fylker
