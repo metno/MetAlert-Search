@@ -1,6 +1,7 @@
 """
-MetAlert Search : Scripts - download (and import) data from kartverket
+MetAlert Search : Kartverket Script
 ===================================
+Download (and import) data from kartverket
 
 Copyright 2021 MET Norway
 
@@ -16,12 +17,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 import json
 import logging
-import dataclasses
-from dataclasses import dataclass, field
 import datetime
+import dataclasses
+
+from dataclasses import dataclass, field
+
 from pathlib import Path
 from typing import List, Union
 from shapely.geometry import mapping
@@ -30,35 +32,35 @@ import dateutil.parser as dtparser
 import geopandas as gpd
 
 
-logging.basicConfig(level="INFO")
-
-
 def get_kartverket_data(what, fn, crs_in, crs_out="epsg:4326"):
-    """Transform Kartverket polygon data for Kommuner / Fylker
+    """Transform Kartverket polygon data for Kommuner/Fylker
 
     The datasets have to be downloaded manually, see
     https://kartkatalog.geonorge.no/metadata?text=administrative%20grenser%20kommuner&organization=Kartverket
-    or
-    https://www.kartverket.no/api-og-data/grensedata
+    or https://www.kartverket.no/api-og-data/grensedata
 
     Note:
-        - The script assumes that one downloads the data as geoJSON. Due
-          to limitations at the time of testing, it had to be downloaded
-          as in the projection `EUREF89 UTM sone 33, 2d`, which
-          corresponds to `EPSG code 25833`.
-        - For historical data, see
-          `Administrative enheter - historiske versjoner` at geonorge.
+    - The script assumes that one downloads the data as geoJSON. Due
+        to limitations at the time of testing, it had to be downloaded
+        as in the projection `EUREF89 UTM sone 33, 2d`, which
+        corresponds to `EPSG code 25833`.
+    - For historical data, see
+        `Administrative enheter - historiske versjoner` at geonorge.
 
-    Args:
-        what (str): What information to get. Has to be in
-            ["fylke", "kommune"]
-        crs_in (str or int): Coordinate system of input.
-        crs_out (str or int): Coordinate system for output.
-            Default is "epsg:4326", which is WGS84.
+    Parameters
+    ----------
+    what : str
+        What information to get. Has to be in ["fylke", "kommune"]
+    crs_in : str or int
+        Coordinate system of input.
+    crs_out : str or int
+        Coordinate system for output. Default is "epsg:4326", which is
+        WGS84.
 
-    Returns:
-        (json): List of Json files with name, geometry, (...).
-
+    Returns
+    -------
+    dict :
+        List of Json files with name, geometry, (...).
     """
     if what == "fylke":
         number_str = "fylkesnummer"
@@ -70,8 +72,9 @@ def get_kartverket_data(what, fn, crs_in, crs_out="epsg:4326"):
 
     base_key = next(iter(data)).split(".")[0]
     # data = geopandas.read_file(fn) # doesn't work due to complexity
-    df = gpd.GeoDataFrame.from_features(data[f'{base_key}.{what}']['features'],
-                                        crs=crs_in)
+    df = gpd.GeoDataFrame.from_features(
+        data[f"{base_key}.{what}"]["features"], crs=crs_in
+    )
     df = df.to_crs(crs_out)
     # gather to Multipolygon by kommune/fylke number if necessary
     df = df.dissolve(by=number_str, as_index=False)
@@ -137,7 +140,6 @@ map_to_db_inv = {
     "polygon": "geometry",
     "coordinateSystem": "crs_out",
 }
-
 
 map_to_db = {v: k for k, v in map_to_db_inv.items()}
 

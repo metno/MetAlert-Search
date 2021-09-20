@@ -1,6 +1,7 @@
 """
-MetAlert Search : Scripts - download (and import) data from TED
-===================================
+MetAlert Search : Ted Script
+============================
+Download (and import) data from TED
 
 Copyright 2021 MET Norway
 
@@ -25,11 +26,9 @@ from re import finditer
 import mysql.connector
 import numpy as np
 
-logging.basicConfig(level="INFO")
-
 
 def feature_dict(entry):
-    """ Template dictionary for JSON feature from TED entry"""
+    """Template dictionary for JSON feature from TED entry"""
     corners = [*entry["corners"], entry["corners"][0]]  # create Linear Ring
     feature = {
         "type": "Feature",
@@ -47,24 +46,32 @@ def feature_dict(entry):
 
 
 class TEDImporter():
+    """ToDo: Add description
+
+    Parameters
+    ----------
+    tedids : list(int)
+        List of Ted ids
+    queryargs : str
+        Entry types to ask for in query, comma separated
     """
-    Attributes:
-        tedids (List(int)): List of Ted ids
-        queryargs (str): Entry types to ask for in query, comma separated
-    """
+
     def __init__(self):
         self.queryargs = "name,id,corners,type"
-
         self.ted_ids = None
         self._cursor = None
 
     def run(self, fn_tedid):
+        """ToDo: Add docstring"""
         try:
             # providing an arb. unknown user gives read-access
-            gate = mysql.connector.connect(user='metsearch', password='',
-                                           host='ted-b',
-                                           database='ted',
-                                           charset='utf8')
+            gate = mysql.connector.connect(
+                user="metsearch",
+                password="",
+                host="ted-b",
+                database="ted",
+                charset="utf8"
+            )
             self._cursor = gate.cursor()
             self.ted_ids = np.loadtxt(fn_tedid, delimiter=":", dtype=str)
             areas = self.ted_to_geojson()
@@ -75,13 +82,18 @@ class TEDImporter():
             print("Database Exception {} ".format(err))
 
     def ted_to_geojson(self, properties=None):
-        """
-        Args:
-            properties (dict, optional): Properties (Metadata) to be added.
-                Potentially not interpreted in external codes.
+        """ToDo: Add description
 
-        Returns:
-            (dict): Data as a geoJSON FeatureCollection
+        Parameters
+        ----------
+        properties : dict
+            Properties (Metadata) to be added (optional). Potentially
+            not interpreted in external codes.
+
+        Returns
+        -------
+        dict :
+            Data as a geoJSON FeatureCollection
         """
         if not isinstance(self.ted_ids, Iterable):
             raise TypeError("Query has to be a list.")
@@ -90,17 +102,22 @@ class TEDImporter():
         [self.apply_fun_to_dictkey(d, fun=self.ted_coords_to_lonlat, key="corners") for d in areas]
 
         features = [feature_dict(area) for area in areas]
-        collection = {"type": "FeatureCollection",
-                      "features": features}
+        collection = {
+            "type": "FeatureCollection",
+            "features": features
+        }
         if properties is not None:
             collection["properties"] = properties
+
         return collection
 
     def get_elements(self):
         """Get elements from database
 
-        Returns:
-            List[dict]: Values from database
+        Returns
+        -------
+        list(dict) :
+            Values from database
         """
         if not isinstance(self.tedids, Iterable):
             raise TypeError("Query has to be a list.")
@@ -112,42 +129,51 @@ class TEDImporter():
         for item in db_results:
             res = {arg: item[i] for i, arg in enumerate(self.args.split(","))}
             result.append(res)
+
         return result
 
     def get_query(self, args="name,id,corners,type"):
         """Building a ted query, based on the ted-ids
 
-        Args:
+        Parameters
+        ----------
 
-
-        Returns:
-            (str): mysql query for ted, querying args
+        Returns
+        -------
+        str :
+            mysql query for ted, querying args
         """
         if not isinstance(self.tedids, Iterable):
             raise TypeError("Query has to be a list.")
-        query = f'select {self.args} from location where id in ({{}});'
+        query = f"select {self.args} from location where id in ({{}});"
         id_str = ",".join([f'"{i}"' for i in self.tedids])
         return query.format(id_str)
 
     @staticmethod
     def ted_coords_to_lonlat(coords):
-        """ Transform coordinates from ted to (lon, lat).
+        """Transform coordinates from ted to (lon, lat).
 
-        Args:
-            coords (str): String of coordinates from the ted database e.g.
-                "100 500:400 300: ..." given as "ilon0 ilat0: ilon1 ilat1: ...".
+        Parameters
+        ----------
+        coords : str
+            String of coordinates from the ted database e.g.
+            "100 500:400 300: ..." given as
+            "ilon0 ilat0: ilon1 ilat1: ...".
 
-        Returns:
-            list(tuple(float, float)): Coordinates as a list of (lon, lat) tuples in
-                decimal degrees.
+        Returns
+        -------
+        list(tuple(float, float)) :
+            Coordinates as a list of (lon, lat) tuples in decimal
+            degrees.
         """
-        coords = coords.split(':')
-        logging.debug('%s corners', len(coords))
+        coords = coords.split(":")
+        logging.debug("%s corners", len(coords))
         result = [TEDImporter._ted_to_decimal_degrees(point.split()) for point in coords]
         return result
 
     @staticmethod
     def apply_fun_to_dictkey(dic, fun=ted_coords_to_lonlat, key="corner"):
+        """ToDo: add docstring"""
         dic[key] = fun(dic[key])
 
     def _ted_to_decimal_degrees(ted_tuple):
@@ -157,17 +183,21 @@ class TEDImporter():
             TED uses some integer representation unknown to me; found this code
             in `autotext`, and it works.
 
-        Args:
-            ted_tuple (Tuple[str, str]): Tuple of coordinates from TED
+        Parameters
+        ----------
+        ted_tuple : tuple(str, str)
+            Tuple of coordinates from TED
 
-        Returns:
-            Tuple[float, float]: Coordinates in decimal degrees
+        Returns
+        -------
+        tuple(float, float) :
+            Coordinates in decimal degrees
         """
         if len(ted_tuple) != 2:
             raise ValueError(f"Wrong format of {ted_tuple}")
         ted_tuple = [int(i) for i in ted_tuple]
-        return tuple([int(i / 10000) + float(i % 10000) / 6000 for i in ted_tuple])
         # TODO: four decimal points only
+        return tuple([int(i / 10000) + float(i % 10000) / 6000 for i in ted_tuple])
 
     def plot_json(fn):
         """Plot json input from file."""
@@ -178,7 +208,7 @@ class TEDImporter():
         # from shapely.geometry import Polygon
 
         df = gpd.read_file(finditer)
-        ax = df.plot(figsize=(10, 10), alpha=0.5, edgecolor='k')
+        ax = df.plot(figsize=(10, 10), alpha=0.5, edgecolor="k")
         ctx.add_basemap(ax, crs=df.crs)
         plt.show()
 
@@ -198,7 +228,7 @@ def main():
     areas = tedimporter.run(fntedid)
 
     # TODO: Pass to db instead
-    with open(sys.argv[2], 'w') as fout:
+    with open(sys.argv[2], "w") as fout:
         json.dump(areas, fout)
 
 
