@@ -15,6 +15,9 @@ coverage:
         threshold: 1%
     changes: no
 
+github_checks:
+  annotations: false
+
 parsers:
   gcov:
     branch_detection:

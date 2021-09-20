@@ -18,16 +18,17 @@ limitations under the License.
 """
 
 import os
+
 import pytest
 
 from tools import causeOSError, writeFile
 
 from ma_search.config import Config
 
+
 @pytest.mark.core
 def testCoreConfig_ReadFile(tmpDir, monkeypatch):
-    """Test reading config file.
-    """
+    """Test reading config file."""
     theConf = Config()
 
     # Read some values and see that we get them
@@ -51,6 +52,7 @@ def testCoreConfig_ReadFile(tmpDir, monkeypatch):
         assert theConf.readConfig(configFile=confFile) is False
 
     # Successful raw read
+    theConf._validateConfig = lambda *a: True
     assert theConf.readConfig(configFile=confFile) is True
 
     # Check the values read
@@ -69,11 +71,20 @@ def testCoreConfig_ReadFile(tmpDir, monkeypatch):
 
 # END Test testCoreConfig_ReadFile
 
+
 @pytest.mark.core
 def testCoreConfig_Validate(tmpDir, caplog):
-    """Test that the class reads all settings and validates them.
-    """
+    """Test that the class reads all settings and validates them."""
     theConf = Config()
+
+    # Base Settings
+    caplog.clear()
+    theConf.dataPath = None
+    assert theConf._validateConfig() is False
+    assert "Setting 'dataPath' must be a string" in caplog.text
+
+    theConf.dataPath = tmpDir
+    assert theConf._validateConfig() is True
 
     # SQLite Settings
     theConf.dbProvider = "sqlite"
@@ -86,12 +97,12 @@ def testCoreConfig_Validate(tmpDir, caplog):
 
     # Not a valid path
     caplog.clear()
-    theConf.sqlitePath = "/not/a/valid/path/stuff.db"
+    theConf.sqlitePath = "/not/a/valid/path/"
     assert theConf._validateConfig() is False
     assert "Cannot locate folder:" in caplog.text
 
     # Folder exists (the file does not need to exist)
-    theConf.sqlitePath = os.path.join(tmpDir, "stuff.db")
+    theConf.sqlitePath = tmpDir
     assert theConf._validateConfig() is True
 
 # END Test testCoreConfig_Validate

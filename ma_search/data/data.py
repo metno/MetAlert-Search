@@ -1,5 +1,5 @@
 """
-MetAlert Search : Test Tools
+MetAlert Search : Data Class
 ============================
 
 Copyright 2021 MET Norway
@@ -17,25 +17,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 
-# File I/O
-
-def readFile(fileName):
-    """Returns the content of a file as a string."""
-    with open(fileName, mode="r", encoding="utf8") as inFile:
-        return inFile.read()
+logger = logging.getLogger(__name__)
 
 
-def writeFile(fileName, fileData):
-    """Write the contents of a string to a file."""
-    with open(fileName, mode="w", encoding="utf8") as outFile:
-        outFile.write(fileData)
+class Data():  # pragma: No cover
+    pass
 
-
-# Exceptions
-
-def causeOSError(*args, **kwargs):
-    """This function will take any arguments and always raise an
-    OSError when called.
-    """
-    raise OSError("Test OSError")
+# END Class Data

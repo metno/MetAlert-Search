@@ -18,14 +18,17 @@ limitations under the License.
 """
 
 import os
-import yaml
 import logging
+
+import yaml
+
+from ma_search.common import logException
 
 logger = logging.getLogger(__name__)
 
+
 class Config():
-    """Main config class wrapping the config yaml file.
-    """
+    """Main config class wrapping the config yaml file."""
 
     def __init__(self):
 
@@ -39,6 +42,7 @@ class Config():
 
         # Core Values
         self.dbProvider = None
+        self.dataPath = None
 
         # SQLite Settings
         self.sqlitePath = None
@@ -51,7 +55,7 @@ class Config():
         Parameters
         ----------
         configFile : str or None, optional
-            The config file to be loaded. If None, pgkRoot/config.yaml
+            The config file to be loaded. If None, pkgRoot/config.yaml
             is attempted loaded instead.
 
         Returns
@@ -70,9 +74,9 @@ class Config():
             with open(configFile, mode="r", encoding="utf8") as inFile:
                 self._rawConf = yaml.safe_load(inFile)
             logger.debug("Read config from: %s" % configFile)
-        except Exception as e:
+        except Exception:
             logger.error("Could not read file: %s" % configFile)
-            logger.error(str(e))
+            logException()
             return False
 
         # Read Values
@@ -88,17 +92,16 @@ class Config():
     ##
 
     def _readCoreSettings(self):
-        """Read config values under 'main'.
-        """
+        """Read config values under 'main'."""
         conf = self._rawConf.get("main", {})
 
         self.dbProvider = conf.get("dbProvider", self.dbProvider)
+        self.dataPath = conf.get("dataPath", self.dataPath)
 
         return
 
     def _readSQLiteSettings(self):
-        """Read config values under 'sqlite'.
-        """
+        """Read config values under 'sqlite'."""
         conf = self._rawConf.get("sqlite", {})
 
         self.sqlitePath = conf.get("sqlitePath", self.sqlitePath)
@@ -106,9 +109,10 @@ class Config():
         return
 
     def _validateConfig(self):
-        """Check config variable dependencies. It needs to be called
-        after all the read functions when all settings have been
-        handled.
+        """Check config variable dependencies.
+
+        This function should be called after all the read functions
+        when all settings have been handled.
 
         Returns
         -------
@@ -117,16 +121,40 @@ class Config():
         """
         valid = True
 
+        if not self._checkFolderExists(self.dataPath, "dataPath"):
+            self.dataPath = None
+            valid = False
+
         if self.dbProvider == "sqlite":
-            if isinstance(self.sqlitePath, str):
-                sqliteDir = os.path.dirname(self.sqlitePath)
-                if not os.path.isdir(sqliteDir):
-                    logger.error("Cannot locate folder: %s" % sqliteDir)
-                    valid = False
-            else:
-                logger.error("Setting 'sqlitePath' must be a string")
+            if not self._checkFolderExists(self.sqlitePath, "sqlitePath"):
+                self.sqlitePath = None
                 valid = False
 
         return valid
+
+    def _checkFolderExists(self, path, name):
+        """Check if a folder exists.
+
+        Parameters
+        ----------
+        path : str
+            The path to be checked.
+        name : str
+            The setting name for use when reporting an error.
+
+        Returns
+        -------
+        bool
+            True if exists and is a string, False otherwise.
+        """
+        if isinstance(path, str):
+            if os.path.isdir(path):
+                return True
+            else:
+                logger.error("Cannot locate folder: %s" % path)
+                return False
+        else:
+            logger.error("Setting '%s' must be a string" % name)
+            return False
 
 # END Class Config
