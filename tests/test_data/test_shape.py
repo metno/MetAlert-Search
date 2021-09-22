@@ -264,25 +264,3 @@ def testDataShape_GeoJsonFromPolygon(fn, tmpConf, fncDir, filesDir, caplog):
     result = Shape.geoJsonFromPolygon(data, pars)
     assert result == expected
     assert "Cannot append" in caplog.text
-
-
-@pytest.mark.data
-@pytest.mark.parametrize(
-    "uuid, expected, logtext", [
-        (None, False, "is not a string"),  # not a string
-        ("33d0c48f-b58c-4b1a-b224-e93b03393cb3", True, ""),  # gen by uuid4
-        ("33d0c48fb58c4b1ab224e93b03393cb3", False, ""),  # missing '-' character
-        ("0", False, "ValueError")  # check catching error
-    ]
-)
-def testDataShape_ValidateUUID(uuid, expected, logtext, caplog, tmpConf, fncDir):
-    """Test that the UUIDs are validated or errors are logged."""
-    tmpConf.dataPath = fncDir
-
-    shape = Shape(uuid)
-    caplog.clear()
-
-    result = shape._validateUuid()
-    assert result == expected
-    if not result:
-        assert logtext in caplog.text
