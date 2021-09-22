@@ -87,8 +87,8 @@ def safeWriteJson(path, data, **kwargs):
     ----------
     path : str
         Path to the file to be created.
-    data : list. dict
-        Data to be dumped. Has to be serializable.
+    data : list, dict, tuple
+        Data to be dumped. Must be writeable as a JSON object or array.
     **kwargs : dict
         Additional kwargs to json.dump. "ensure_ascii" defaults to
         False.
