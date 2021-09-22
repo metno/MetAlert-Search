@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<alert>
+  <sent></sent>
+  <info>
+    <area>
+      <areaDesc>Area1</areaDesc>
+      <polygon>None,1.23</polygon>
+      <circle>1.234,5.67 None</circle>
+      <geocode>
+        <valueName>value1</valueName>
+        <value>123</value>
+      </geocode>
+      <altitude></altitude>
+      <ceiling></ceiling>
+    </area>
+  </info>
+</alert>

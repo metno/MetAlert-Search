@@ -24,9 +24,20 @@ import pytest
 from tools import readFile, writeFile, causeOSError
 
 from ma_search.common import (
-    safeMakeDir, safeWriteString, safeWriteJson, safeLoadString, safeLoadJson,
-    checkUUID
+    checkFloat, safeMakeDir, safeWriteString, safeWriteJson, safeLoadString,
+    safeLoadJson, checkUUID
 )
+
+
+@pytest.mark.core
+def testBaseCommon_CheckFloat():
+    """Test the checkFloat function."""
+    assert checkFloat(None, 3.0, True) is None
+    assert checkFloat("None", 3.0, True) is None
+    assert checkFloat(None, 3.0, False) == 3.0
+    assert checkFloat(1, 3, False) == 1.0
+    assert checkFloat(1.0, 3, False) == 1.0
+    assert checkFloat(True, 3, False) == 1.0
 
 
 @pytest.mark.core

@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<alert>
+  <identifier>mockAlert</identifier>
+  <sent>2001-03-04T05:06:07+00:00</sent>
+  <info>
+    <language>no</language>
+    <area>
+      <areaDesc>Area1</areaDesc>
+      <polygon>12,34 56,78</polygon>
+      <circle>1.234,5.67 89</circle>
+      <geocode>
+        <valueName>value1</valueName>
+        <value>123</value>
+      </geocode>
+      <geocode>
+        <valueName>value2</valueName>
+        <value>123</value>
+      </geocode>
+      <altitude>200</altitude>
+      <ceiling>100</ceiling>
+    </area>
+  </info>
+</alert>

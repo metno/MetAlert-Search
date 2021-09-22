@@ -26,6 +26,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def checkFloat(value, default, allowNone=False):
+    """Check if a variable is an float or a none."""
+    if allowNone and (value is None or value == "None"):
+        return None
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
 def safeMakeDir(path):
     """Create a folder and return if successful.
 
