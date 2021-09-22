@@ -17,12 +17,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import json
 import os
 import sys
+import json
+import uuid
 import logging
-
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -66,36 +65,24 @@ def safeMakeDir(path):
     return True
 
 
-def safeWriteString(fn, string, **kwargs):
+def safeWriteString(path, data):
     """Write data to file and log exceptions.
 
     Parameters
     ----------
-    fn : str
+    path : str
         Path to the file to be created.
-    string : string
-        String to be dumped.
-    **kwargs : dict
-        Additional kwargs to Path.write_text
+    data : Any
+        Data to be dumped.
 
     Returns
     -------
     bool
         True if successful, False otherwise.
     """
-
-    if isinstance(fn, (str, Path)):
-        path = Path(fn)
-    else:
-        logger.error("path should be string or pathlib.Path but is: %s", type(fn))
-        return False
-
-    if not isinstance(string, str):
-        logger.error("Data should be string but is: %s", type(string))
-        return False
-
     try:
-        path.write_text(string, **kwargs)
+        with open(path, mode="w", encoding="utf-8") as outFile:
+            outFile.write(str(data))
         return True
     except Exception:
         logger.error("Could not write to file: %s", path)
@@ -103,15 +90,15 @@ def safeWriteString(fn, string, **kwargs):
         return False
 
 
-def safeWriteJson(fn, data, **kwargs):
+def safeWriteJson(path, data, **kwargs):
     """Write data to a json file and log exceptions.
 
     Parameters
     ----------
-    fn : str
+    path : str
         Path to the file to be created.
-    data
-        Data to be dumped. Has to be serializable.
+    data : list, dict, tuple
+        Data to be dumped. Must be writeable as a JSON object or array.
     **kwargs : dict
         Additional kwargs to json.dump. "ensure_ascii" defaults to
         False.
@@ -124,51 +111,43 @@ def safeWriteJson(fn, data, **kwargs):
     kwargs.setdefault("ensure_ascii", False)
     try:
         string = json.dumps(data, **kwargs)
-        safeWriteString(fn, string)
+        safeWriteString(path, string)
         return True
     except Exception:
-        logger.error("Could not write to file: %s", fn)
+        logger.error("Could not write to file: %s", path)
         logException()
         return False
 
 
-def safeLoadString(fn, **kwargs):
+def safeLoadString(path):
     """Load string from file and log exceptions.
 
     Parameters
     ----------
     fn : str
-        Path to the file to be created.
-    **kwargs : dict
-        Additional kwargs to Path.read_text
+        Path to the file to be read.
 
     Returns
     -------
     str or None
         Data as string if successful, None otherwise.
     """
-
-    if isinstance(fn, (str, Path)):
-        path = Path(fn)
-    else:
-        logger.error("path should be str or pathlib.Path but is: %s", type(fn))
-        return None
-
     try:
-        return path.read_text(**kwargs)
+        with open(path, mode="r", encoding="utf-8") as inFile:
+            return inFile.read()
     except Exception:
         logger.error("Could not read from file: %s", path)
         logException()
         return None
 
 
-def safeLoadJson(fn, **kwargs):
+def safeLoadJson(path, **kwargs):
     """Load data from a json file and log exceptions.
 
     Parameters
     ----------
-    fn : str
-        Path to the file to be created.
+    path : str
+        Path to the file to be read.
     **kwargs : dict
         Additional kwargs to json.loads
 
@@ -178,10 +157,10 @@ def safeLoadJson(fn, **kwargs):
         Data from json file if successful, otherwise None.
     """
     try:
-        string = safeLoadString(fn)
+        string = safeLoadString(path)
         return json.loads(string, **kwargs)
     except Exception:
-        logger.error("Could not deserialize json from file: %s", fn)
+        logger.error("Could not deserialize json from file: %s", path)
         logException()
         return None
 
@@ -194,3 +173,28 @@ def logException():
     """
     exType, exValue, _ = sys.exc_info()
     logger.error("%s: %s" % (exType.__name__, str(exValue).strip("'")))
+
+
+def checkUUID(value):
+    """Check that a string is a valid UUID and force one format.
+
+    Parameters
+    ----------
+    value : str
+        The string holding the UUID to be checked.
+
+    Returns
+    -------
+    str or None
+        Returns a proper formatted UUID string, or None if invalid.
+    """
+    if not isinstance(value, str):
+        logger.error("The UUID must be a string")
+        return None
+
+    try:
+        return str(uuid.UUID(value))
+    except Exception:
+        logger.error("Could not parse '%s' as a UUID", str(value))
+        logException()
+        return None
