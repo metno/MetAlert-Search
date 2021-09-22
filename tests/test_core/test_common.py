@@ -24,7 +24,8 @@ import pytest
 from tools import readFile, writeFile, causeOSError
 
 from ma_search.common import (
-    safeMakeDir, safeWriteString, safeWriteJson, safeLoadString, safeLoadJson
+    safeMakeDir, safeWriteString, safeWriteJson, safeLoadString, safeLoadJson,
+    checkUUID
 )
 
 
@@ -156,3 +157,15 @@ def testCoreCommon_SafeLoadJson(tmpDir, caplog):
     assert "JSONDecodeError" in caplog.text
 
 # END Test testCoreCommon_SafeMakeDir
+
+
+@pytest.mark.core
+def testCoreCommon_CheckUUID():
+    """Test the validateUUID function."""
+    testUUID = "e1600641-e537-4d40-8d2f-2fd2c7c457c6"
+    assert checkUUID(None) is None
+    assert checkUUID("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") is None
+    assert checkUUID("e1600641e5374d408d2f2fd2c7c457c6") == testUUID
+    assert checkUUID("e1600641-e537-4d40-8d2f-2fd2c7c457c6") == testUUID
+
+# END Test testCoreCommon_CheckUUID
