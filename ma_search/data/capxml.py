@@ -50,6 +50,9 @@ class CapXML():
     ##
 
     def _parseInfo(self, info):
+        """Parses info-subelement in the capxml file, most values 
+        defaulting to None if not in file
+        """
         infoLang = "en"
         infoAreaDesc = ""
         polygonList = []
@@ -105,4 +108,7 @@ class CapXML():
         self._info["ceiling"] = ceiling
 
     def _localname(self, etreeElem):
+        """Helper function to do searches in the xml-file, ignoring
+        versioned namespace
+        """
         return etree.QName(etreeElem.tag).localname
