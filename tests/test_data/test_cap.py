@@ -42,7 +42,7 @@ def testDataCap_Init(filesDir):
 
 @pytest.mark.data
 def testDataCap_ParseInfo(filesDir):
-    """Test parseInfo method with a correctly formatted capxml-file, 
+    """Test parseInfo method with a correctly formatted capxml-file,
     and a capxml-file with missing entries."""
     succPath = os.path.join(filesDir, "mock.cap.xml")
     failPath = os.path.join(filesDir, "mockFailing.cap.xml")

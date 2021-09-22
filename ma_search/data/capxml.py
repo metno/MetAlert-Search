@@ -50,7 +50,7 @@ class CapXML():
     ##
 
     def _parseInfo(self, info):
-        """Parses info-subelement in the capxml file, most values 
+        """Parses info-subelement in the capxml file, most values
         defaulting to None if not in file
         """
         infoLang = "en"
