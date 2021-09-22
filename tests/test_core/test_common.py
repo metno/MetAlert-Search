@@ -26,7 +26,21 @@ from pathlib import Path
 
 from tools import writeFile, causeOSError
 
-import ma_search.common as co
+from ma_search.common import (
+    checkFloat, safeMakeDir, safeWriteString, safeWriteJson, safeLoadString,
+    safeLoadJson
+)
+
+
+@pytest.mark.core
+def testBaseCommon_CheckFloat():
+    """Test the checkFloat function."""
+    assert checkFloat(None, 3.0, True) is None
+    assert checkFloat("None", 3.0, True) is None
+    assert checkFloat(None, 3.0, False) == 3.0
+    assert checkFloat(1, 3, False) == 1.0
+    assert checkFloat(1.0, 3, False) == 1.0
+    assert checkFloat(True, 3, False) == 1.0
 
 
 @pytest.mark.core
@@ -35,21 +49,21 @@ def testCoreCommon_SafeMakeDir(tmpDir, caplog):
     newDir = os.path.join(tmpDir, "safemakedir")
     newFile = os.path.join(tmpDir, "safemakedir", "file.txt")
     # Wrong type
-    assert co.safeMakeDir(None) is False
+    assert safeMakeDir(None) is False
 
     # Success
-    assert co.safeMakeDir(newDir) is True
+    assert safeMakeDir(newDir) is True
     assert os.path.isdir(newDir)
 
     # Try again, should result in success
-    assert co.safeMakeDir(newDir) is True
+    assert safeMakeDir(newDir) is True
     assert os.path.isdir(newDir)
 
     # Make a dir where a file exists
     writeFile(newFile, "stuff")
     assert os.path.isfile(newFile)
     caplog.clear()
-    assert co.safeMakeDir(newFile) is False
+    assert safeMakeDir(newFile) is False
     assert "Could not create: %s" % newFile in caplog.text
 
 
@@ -61,31 +75,31 @@ def testCoreCommon_SafeWriteString(tmpDir, caplog, monkeypatch):
 
     # Wrong type
     caplog.clear()
-    assert co.safeWriteString(None, string) is False
+    assert safeWriteString(None, string) is False
     assert "path should be string or pathlib.Path" in caplog.text
 
     # Success
-    assert co.safeWriteString(newFile, string) is True
+    assert safeWriteString(newFile, string) is True
     assert newFile.read_text() == string
 
     # Try again, should result in success (overwrite)
-    assert co.safeWriteString(newFile, string) is True
+    assert safeWriteString(newFile, string) is True
     assert newFile.read_text() == string
 
     # Try again with str, should result in success
-    assert co.safeWriteString(str(newFile), string) is True
+    assert safeWriteString(str(newFile), string) is True
     assert newFile.read_text() == string
 
     # Typecheck of string
     caplog.clear()
-    assert co.safeWriteString(newFile, ["", ""]) is False
+    assert safeWriteString(newFile, ["", ""]) is False
     assert "Data should be string but is" in caplog.text
 
     # Check catching exception
     caplog.clear()
     with monkeypatch.context() as m:
         m.setattr(Path, "write_text", causeOSError)
-        assert co.safeWriteString(newFile, string) is False
+        assert safeWriteString(newFile, string) is False
         assert f"Could not write to file: {newFile}" in caplog.text
 
 
@@ -101,7 +115,7 @@ def testCoreCommon_safeWriteJson(data, exp, tmpDir, caplog):
 
     # check execution
     caplog.clear()
-    assert co.safeWriteJson(newFile, data) is exp
+    assert safeWriteJson(newFile, data) is exp
     if exp is False:
         assert "Could not write to file" in caplog.text
 
@@ -115,20 +129,20 @@ def testCoreCommon_SafeLoadString(tmpDir, caplog, monkeypatch):
 
     # Wrong type
     caplog.clear()
-    assert co.safeLoadString(None) is None
+    assert safeLoadString(None) is None
     assert "path should be str or pathlib.Path" in caplog.text
 
     # Success
-    assert co.safeLoadString(newFile) == string
+    assert safeLoadString(newFile) == string
 
     # Try again with str, should result in success
-    assert co.safeLoadString(str(newFile)) == string
+    assert safeLoadString(str(newFile)) == string
 
     # Check catching exception
     caplog.clear()
     with monkeypatch.context() as m:
         m.setattr(Path, "read_text", causeOSError)
-        assert co.safeLoadString(newFile) is None
+        assert safeLoadString(newFile) is None
         assert f"Could not read from file: {newFile}" in caplog.text
 
 
@@ -143,13 +157,13 @@ def testCoreCommon_safeLoadJson(data, tmpDir, caplog):
 
     # check execution
     caplog.clear()
-    assert co.safeLoadJson(newFile) == data
+    assert safeLoadJson(newFile) == data
 
     # catch exceptions -- string is not json conform
     string = "[{,,]."
     newFile.write_text(string)
     caplog.clear()
-    assert co.safeLoadJson(newFile) is None
+    assert safeLoadJson(newFile) is None
     assert f"Could not deserialize json from file: {newFile}" in caplog.text
     assert "JSONDecodeError" in caplog.text
 
