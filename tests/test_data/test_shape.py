@@ -34,14 +34,18 @@ def testDataShape_Init(tmpConf, fncDir, caplog):
     """Tests class initialisation."""
     tmpConf.dataPath = fncDir
 
-    # check error if file does not exist
+    # Check error if invalid UUID
+    caplog.clear()
+    Shape(None)
+    assert "UUID 'None' is not valid" in caplog.text
+
+    # Check error if file does not exist
     caplog.clear()
     uuid = "33d0c48f-b58c-4b1a-b224-e93b03393cb3"
     Shape(uuid)
     assert "does not exist" in caplog.text
 
-    # but runs if it exists
-
+    # Check that it is or of the file exists
     writeFile(os.path.join(fncDir, uuid+".geojson"), "")
     caplog.clear()
     Shape(uuid)
