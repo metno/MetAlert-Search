@@ -20,6 +20,7 @@ limitations under the License.
 import os
 import sys
 import json
+import uuid
 import logging
 
 logger = logging.getLogger(__name__)
@@ -162,3 +163,28 @@ def logException():
     """
     exType, exValue, _ = sys.exc_info()
     logger.error("%s: %s" % (exType.__name__, str(exValue).strip("'")))
+
+
+def checkUUID(value):
+    """Check that a string is a valid UUID and force one format.
+
+    Parameters
+    ----------
+    value : str
+        The string holding the UUID to be checked.
+
+    Returns
+    -------
+    str or None
+        Returns a proper formatted UUID string, or None if invalid.
+    """
+    if not isinstance(value, str):
+        logger.error("The UUID must be a string")
+        return None
+
+    try:
+        return str(uuid.UUID(value))
+    except Exception:
+        logger.error("Could not parse '%s' as a UUID", str(value))
+        logException()
+        return None
