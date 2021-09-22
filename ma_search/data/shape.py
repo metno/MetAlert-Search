@@ -17,13 +17,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
 import logging
-from pathlib import Path
 from uuid import UUID, uuid4
 
 from shapely.geometry import MultiPolygon, Polygon, mapping, shape
 
 import ma_search
+
 from ma_search.common import safeLoadJson, safeWriteJson, logException
 
 logger = logging.getLogger(__name__)
@@ -45,8 +46,8 @@ class Shape():
             logger.error("UUID %s is not valid", self._uuid)
             return
 
-        self._path = (Path(self.conf.dataPath) / self._uuid).with_suffix(".geojson")
-        if not self._path.exists():
+        self._path = os.path.join(self.conf.dataPath, self._uuid+".geojson")
+        if not os.path.isfile(self._path):
             logger.error("UUID file %s does not exist", self._path)
             return
 
@@ -73,7 +74,7 @@ class Shape():
         if cls.polygonFromGeoJson(data) is None:
             return None
 
-        path = (ma_search.CONFIG.dataPath / str(uuid)).with_suffix(".geojson")
+        path = os.path.join(ma_search.CONFIG.dataPath, str(uuid)+".geojson")
         if not safeWriteJson(path, data):
             logger.error("Cannot write GeoJson file %s", path)
             return None
@@ -108,9 +109,8 @@ class Shape():
         elif tolerance == 0.0:
             return self.polygonFromGeoJson(self._path)
         else:
-            suffix = f".{round(tolerance * 1e6)}.geojson"
-            path = (self._path.parent / self._path.stem).with_suffix(suffix)
-            exists = path.exists()
+            path = self._path[:-8]+f".{round(tolerance * 1e6)}.geojson"
+            exists = os.path.isfile(path)
 
             if exists:
                 return self.polygonFromGeoJson(path)
@@ -171,13 +171,12 @@ class Shape():
         """
         if isinstance(data, dict):
             pass
-        elif isinstance(data, (Path, str)):
-            path = Path(data)
-            data = safeLoadJson(path)
+        elif isinstance(data, str):
+            data = safeLoadJson(data)
             if data is None:
                 return None
         else:
-            logger.error("Input has to be dict, Path or string but is of type %s", type(data))
+            logger.error("Input has to be dict or string but is of type %s", type(data))
             return None
 
         if "geometry" in data:
