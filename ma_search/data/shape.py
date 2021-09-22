@@ -59,10 +59,10 @@ class Shape():
 
         Parameters
         ----------
-        data : dict or Path or str
+        data : dict or str
             Input data, either a single GeoJson feature, or only the
-            geometry section of a single feature. If str or Path: path
-            to the file containing this dict.
+            geometry section of a single feature. If str: path to the
+            file containing this dict.
 
         Returns
         -------
@@ -145,8 +145,10 @@ class Shape():
             Geometry as dict in GeoJson format
         """
         geom = mapping(self.polygon(**kwargs))
-        geoJson = {"type": "Feature",
-                   "geometry": geom}
+        geoJson = {
+            "type": "Feature",
+            "geometry": geom
+        }
         return geoJson
 
     ##
@@ -159,10 +161,10 @@ class Shape():
 
         Parameters
         ----------
-        data : dict or Path or str
+        data : dict or str
             Input data, either a single GeoJson feature, or only the
-            geometry section of a single feature. If str or Path: Path
-            to the file containing this dict.
+            geometry section of a single feature. If str: path to the
+            file containing this dict.
 
         Returns
         -------
