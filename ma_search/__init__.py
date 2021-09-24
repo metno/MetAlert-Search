@@ -90,11 +90,11 @@ def apiMain():
 # END apiMain
 
 
-def maintenance():
+def maintenance(sysArgs):
     """The maintenance script entry point.
     """
     from ma_search.utils import ingestCap
-    if len(sys.argv) < 2:
+    if len(sysArgs) < 2:
         print(
             "Available commands:\n"
             "  ingest_cap      Ingest CAP file(s)\n"
@@ -104,7 +104,7 @@ def maintenance():
         )
         sys.exit(1)
 
-    cmd = sys.argv[1]
+    cmd = sysArgs[1]
 
     if cmd == "ingest_cap":
-        ingestCap(sys.argv[2:])
+        ingestCap(sysArgs[2:])
