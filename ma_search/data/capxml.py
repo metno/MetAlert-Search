@@ -108,7 +108,7 @@ class CapXML():
         self._info["ceiling"] = ceiling
 
     def _localname(self, etreeElem):
-        """Helper function to do searches in the xml-file, ignoring
+        """Helper function to do searches in the xml file, ignoring
         versioned namespace
         """
         return etree.QName(etreeElem.tag).localname

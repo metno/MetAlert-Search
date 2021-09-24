@@ -18,11 +18,33 @@ limitations under the License.
 """
 
 import logging
+import ma_search
+
+from ma_search.data.capxml import CapXML
 
 logger = logging.getLogger(__name__)
 
 
-class Data():  # pragma: No cover
-    pass
+class Data():
+
+    def __init__(self):
+        self.conf = ma_search.CONFIG
+        return
+
+    def ingestAlertFile(self, path, doReplace=False):
+        """Ingest a CAP file, generate the meta data JSON files and
+        add it to the index database.
+        """
+        try:
+            capData = CapXML(path)
+        except Exception:
+            logger.error("Could not parse CAP file: %s", str(path))
+            return False
+
+        identifier = capData["identifier"]
+        if identifier is None:
+            return False
+
+        return True
 
 # END Class Data
