@@ -19,13 +19,14 @@ limitations under the License.
 
 import os
 import logging
-from uuid import uuid4
-
-from shapely.geometry import MultiPolygon, Polygon, mapping, shape
-
 import ma_search
 
-from ma_search.common import safeLoadJson, safeWriteJson, logException, checkUUID
+from uuid import uuid4
+from shapely.geometry import MultiPolygon, Polygon, mapping, shape
+
+from ma_search.common import (
+    safeLoadJson, safeWriteJson, logException, checkUUID, preparePath
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,8 @@ class Shape():
             logger.error("UUID '%s' is not valid", str(uuid))
             return
 
-        self._path = os.path.join(self.conf.dataPath, self._uuid+".geojson")
+        savePath = preparePath(self.conf.dataPath, "map", self._uuid)
+        self._path = os.path.join(savePath, self._uuid+".geojson")
         if not os.path.isfile(self._path):
             logger.error("UUID file %s does not exist", self._path)
             return
@@ -71,16 +73,17 @@ class Shape():
             A new instance of Shape(). Returns None for invalid input,
             e.g. not a Polygon.
         """
-        uuid = uuid4()
+        uuid = str(uuid4())
         if cls.polygonFromGeoJson(data) is None:
             return None
 
-        path = os.path.join(ma_search.CONFIG.dataPath, str(uuid)+".geojson")
+        savePath = preparePath(ma_search.CONFIG.dataPath, "map", uuid)
+        path = os.path.join(savePath, uuid+".geojson")
         if not safeWriteJson(path, data):
             logger.error("Cannot write GeoJson file %s", path)
             return None
 
-        return cls(str(uuid))
+        return cls(uuid)
 
     ##
     #  Methods
@@ -196,7 +199,7 @@ class Shape():
             return None
 
     @staticmethod
-    def geoJsonFromPolygon(polygon, extra={}):
+    def geoJsonFromPolygon(polygon, extra=None):
         """Returns geoJson from a shapely object
 
         Parameters
@@ -212,8 +215,13 @@ class Shape():
         dict
             GeoJson dict
         """
-        geoJson = {"type": "Feature",
-                   "geometry": mapping(polygon)}
+        if extra is None:
+            extra = {}
+
+        geoJson = {
+            "type": "Feature",
+            "geometry": mapping(polygon)
+        }
         if "type" in extra or "geometry" in extra:
             logging.warning("Cannot append extra arguments due to overlap in keys")
             return geoJson

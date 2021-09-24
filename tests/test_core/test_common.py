@@ -24,13 +24,13 @@ import pytest
 from tools import readFile, writeFile, causeOSError
 
 from ma_search.common import (
-    checkFloat, safeMakeDir, safeWriteString, safeWriteJson, safeLoadString,
-    safeLoadJson, checkUUID
+    checkFloat, preparePath, safeMakeDir, safeMakeDirs, safeWriteString,
+    safeWriteJson, safeLoadString, safeLoadJson, checkUUID
 )
 
 
 @pytest.mark.core
-def testBaseCommon_CheckFloat():
+def testCoreCommon_CheckFloat():
     """Test the checkFloat function."""
     assert checkFloat(None, 3.0, True) is None
     assert checkFloat("None", 3.0, True) is None
@@ -39,12 +39,39 @@ def testBaseCommon_CheckFloat():
     assert checkFloat(1.0, 3, False) == 1.0
     assert checkFloat(True, 3, False) == 1.0
 
+# END Test testCoreCommon_CheckFloat
+
 
 @pytest.mark.core
-def testCoreCommon_SafeMakeDir(tmpDir, caplog):
+def testCoreCommon_PreparePath(fncDir, monkeypatch):
+    """Test the preparePath function."""
+    # Wrong type
+    assert preparePath(os.path.join(fncDir, "whatever"), "test", None) is None
+    assert preparePath(fncDir, "test", None) is None
+    assert preparePath(fncDir, "test", "0123456789abcdef") is None
+
+    # Valid Path
+    tUUID = "85892716-b07a-4717-9685-331d582ad734"
+    tPath = os.path.join(fncDir, "test_6", "test_1")
+    assert preparePath(fncDir, "test", tUUID) == tPath
+
+    # Second Pass
+    assert preparePath(fncDir, "test", tUUID) == tPath
+
+    # Make safeMakeDirs fail
+    with monkeypatch.context() as mp:
+        mp.setattr(os, "makedirs", causeOSError)
+        assert preparePath(fncDir, "test", tUUID) is None
+
+# END Test testCoreCommon_PreparePath
+
+
+@pytest.mark.core
+def testCoreCommon_SafeMakeDir(fncDir, caplog):
     """Test the safeMakeDir function."""
-    newDir = os.path.join(tmpDir, "safemakedir")
-    newFile = os.path.join(tmpDir, "safemakedir", "file.txt")
+    newDir = os.path.join(fncDir, "safemakedir")
+    newFile = os.path.join(fncDir, "safemakedir", "file.txt")
+
     # Wrong type
     assert safeMakeDir(None) is False
 
@@ -62,6 +89,35 @@ def testCoreCommon_SafeMakeDir(tmpDir, caplog):
     caplog.clear()
     assert safeMakeDir(newFile) is False
     assert "Could not create: %s" % newFile in caplog.text
+
+# END Test testCoreCommon_SafeMakeDir
+
+
+@pytest.mark.core
+def testCoreCommon_SafeMakeDirs(fncDir, caplog):
+    """Test the safeMakeDirs function."""
+    newDir = os.path.join(fncDir, "safemakedirs")
+    newFile = os.path.join(fncDir, "safemakedirs", "file.txt")
+
+    # Wrong type
+    assert safeMakeDir(None) is False
+
+    # Success
+    assert safeMakeDirs(newDir) is True
+    assert os.path.isdir(newDir)
+
+    # Try again, should result in success
+    assert safeMakeDirs(newDir) is True
+    assert os.path.isdir(newDir)
+
+    # Make a dir where a file exists
+    writeFile(newFile, "stuff")
+    assert os.path.isfile(newFile)
+    caplog.clear()
+    assert safeMakeDirs(newFile) is False
+    assert "Could not create folders: %s" % newFile in caplog.text
+
+# END Test testCoreCommon_SafeMakeDirs
 
 
 @pytest.mark.core
@@ -95,11 +151,13 @@ def testCoreCommon_SafeWriteString(fncDir, caplog, monkeypatch):
         assert safeWriteString(newFile, string) is False
         assert "Could not write to file" in caplog.text
 
+# END Test testCoreCommon_SafeWriteString
+
 
 @pytest.mark.core
-def testCoreCommon_SafeWriteJson(tmpDir, caplog):
+def testCoreCommon_SafeWriteJson(fncDir, caplog):
     """Test the safeWriteJson function."""
-    newFile = os.path.join(tmpDir, "file.txt")
+    newFile = os.path.join(fncDir, "file.txt")
 
     # Check execution
     assert safeWriteJson(newFile, "dummy øab") is True
@@ -114,11 +172,13 @@ def testCoreCommon_SafeWriteJson(tmpDir, caplog):
     assert safeWriteJson(newFile, mockClass) is False
     assert "Could not write to file" in caplog.text
 
+# END Test testCoreCommon_SafeWriteJson
+
 
 @pytest.mark.core
-def testCoreCommon_SafeLoadString(tmpDir, caplog, monkeypatch):
+def testCoreCommon_SafeLoadString(fncDir, caplog, monkeypatch):
     """Test the safeLoadString function."""
-    newFile = os.path.join(tmpDir, "file.txt")
+    newFile = os.path.join(fncDir, "file.txt")
     string = "mock text \n\n  \n øä."
     writeFile(newFile, string)
 
@@ -140,11 +200,13 @@ def testCoreCommon_SafeLoadString(tmpDir, caplog, monkeypatch):
         assert safeLoadString(newFile) is None
         assert "Could not read from file" in caplog.text
 
+# END Test testCoreCommon_SafeLoadString
+
 
 @pytest.mark.core
-def testCoreCommon_SafeLoadJson(tmpDir, caplog):
+def testCoreCommon_SafeLoadJson(fncDir, caplog):
     """Test the safeLoadJson function."""
-    newFile = os.path.join(tmpDir, "file.txt")
+    newFile = os.path.join(fncDir, "file.txt")
 
     # Check execution
     data = "dummy øab"
