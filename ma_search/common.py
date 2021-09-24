@@ -36,8 +36,29 @@ def checkFloat(value, default, allowNone=False):
         return default
 
 
+def preparePath(baseDir, fUUID):
+    """Assemble a path from a base directory and a UUID and make sure
+    the folders are created. The base directory must already exist.
+    """
+    if not os.path.isdir(baseDir):
+        logger.error("Base directory does not exist: %s", baseDir)
+        return None
+
+    if not (isinstance(fUUID, str) and len(str(fUUID)) == 36):
+        logger.error("UUID must be a 32 character string, but got '%s'", str(fUUID))
+        return None
+
+    subOne = fUUID[6:8]
+    subTwo = fUUID[4:6]
+    saveDir = os.path.join(baseDir, subOne, subTwo)
+    if not safeMakeDirs(saveDir):
+        return None
+
+    return saveDir
+
+
 def safeMakeDir(path):
-    """Create a folder and return if successful.
+    """Create a folder and handle IO errors.
 
     Parameters
     ----------
@@ -46,8 +67,8 @@ def safeMakeDir(path):
 
     Returns
     -------
-    bool
-        True if successful, False otherwise.
+    bool :
+        True if successful, otherwise False.
     """
     if not isinstance(path, str):
         return False
@@ -59,6 +80,29 @@ def safeMakeDir(path):
         os.mkdir(path)
     except Exception:
         logger.error("Could not create: %s" % str(path))
+        logException()
+        return False
+
+    return True
+
+
+def safeMakeDirs(path):
+    """Create a tree of folders and handle IO errors.
+
+    Parameters
+    ----------
+    path : str
+        The path to the folder to be created/checked.
+
+    Returns
+    -------
+    bool :
+        True if successful, otherwise False.
+    """
+    try:
+        os.makedirs(path, exist_ok=True)
+    except Exception:
+        logger.error("Could not create folders: %s" % str(path))
         logException()
         return False
 
