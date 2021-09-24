@@ -36,7 +36,7 @@ def checkFloat(value, default, allowNone=False):
         return default
 
 
-def preparePath(baseDir, fUUID):
+def preparePath(baseDir, prefix, fUUID):
     """Assemble a path from a base directory and a UUID and make sure
     the folders are created. The base directory must already exist.
     """
@@ -48,8 +48,8 @@ def preparePath(baseDir, fUUID):
         logger.error("UUID must be a 32 character string, but got '%s'", str(fUUID))
         return None
 
-    subOne = fUUID[6:8]
-    subTwo = fUUID[4:6]
+    subOne = f"{prefix}_{fUUID[7]}"
+    subTwo = f"{prefix}_{fUUID[6]}"
     saveDir = os.path.join(baseDir, subOne, subTwo)
     if not safeMakeDirs(saveDir):
         return None

@@ -46,22 +46,22 @@ def testCoreCommon_CheckFloat():
 def testCoreCommon_PreparePath(fncDir, monkeypatch):
     """Test the preparePath function."""
     # Wrong type
-    assert preparePath(os.path.join(fncDir, "whatever"), None) is None
-    assert preparePath(fncDir, None) is None
-    assert preparePath(fncDir, "0123456789abcdef") is None
+    assert preparePath(os.path.join(fncDir, "whatever"), "test", None) is None
+    assert preparePath(fncDir, "test", None) is None
+    assert preparePath(fncDir, "test", "0123456789abcdef") is None
 
     # Valid Path
     tUUID = "85892716-b07a-4717-9685-331d582ad734"
-    tPath = os.path.join(fncDir, "16", "27")
-    assert preparePath(fncDir, tUUID) == tPath
+    tPath = os.path.join(fncDir, "test_6", "test_1")
+    assert preparePath(fncDir, "test", tUUID) == tPath
 
     # Second Pass
-    assert preparePath(fncDir, tUUID) == tPath
+    assert preparePath(fncDir, "test", tUUID) == tPath
 
     # Make safeMakeDirs fail
     with monkeypatch.context() as mp:
         mp.setattr(os, "makedirs", causeOSError)
-        assert preparePath(fncDir, tUUID) is None
+        assert preparePath(fncDir, "test", tUUID) is None
 
 # END Test testCoreCommon_PreparePath
 

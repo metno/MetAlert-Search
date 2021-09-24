@@ -45,15 +45,15 @@ def testDataShape_Init(tmpConf, fncDir, caplog):
     Shape(uuid)
     assert "does not exist" in caplog.text
 
-    # Check that it is or of the file exists
-    writeFile(os.path.join(fncDir, uuid+".geojson"), "")
+    # Check that it is ok if the file exists
+    writeFile(os.path.join(fncDir, "map_f", "map_8", uuid+".geojson"), "")
     caplog.clear()
     Shape(uuid)
     assert caplog.text == ""
 
 
 @pytest.mark.parametrize(
-    "fn", ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]
+    "fn", ["fylker_0.json", "kommuner_0.json", "kommuner_291.json"]
 )
 @pytest.mark.data
 def testDataShape_FromGeoJson(fn, tmpConf, fncDir, filesDir, caplog, monkeypatch):
@@ -89,7 +89,7 @@ def testDataShape_Polygon(tmpConf, fncDir, caplog, filesDir, monkeypatch):
     """Checks that Polygon is found or created."""
     tmpConf.dataPath = fncDir
 
-    fn = os.path.join(filesDir, "simple_Fylker_0.json")
+    fn = os.path.join(filesDir, "fylker_0.json")
     with open(fn, mode="r", encoding="utf-8") as f:
         data = json.load(f)
         data = data["polygon"]
@@ -103,7 +103,7 @@ def testDataShape_Polygon(tmpConf, fncDir, caplog, filesDir, monkeypatch):
     assert "Tolerance has to be float" in caplog.text
 
     # Create file ans see if it is returned:
-    path = os.path.join(fncDir, uuid+".geojson")
+    path = os.path.join(fncDir, "map_f", "map_8", uuid+".geojson")
     with open(path, mode="w", encoding="utf-8") as f:
         json.dump(data, f)
     result = shape.polygon()
@@ -113,7 +113,7 @@ def testDataShape_Polygon(tmpConf, fncDir, caplog, filesDir, monkeypatch):
     caplog.clear()
     tolerance = 50.5
     tolerance_str = str(50_500_000)
-    fnjson = os.path.join(fncDir, f"{uuid}.{tolerance_str}.geojson")
+    fnjson = os.path.join(fncDir, "map_f", "map_8", f"{uuid}.{tolerance_str}.geojson")
     # `missing_ok` not available >py3.8 so we do this with an if test
     if os.path.isfile(fnjson):
         os.unlink(fnjson)
@@ -157,7 +157,7 @@ def testDataShape_Polygon(tmpConf, fncDir, caplog, filesDir, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "fn", ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]
+    "fn", ["fylker_0.json", "kommuner_0.json", "kommuner_291.json"]
 )
 @pytest.mark.data
 def testDataShape_ToGeoJson(fn, tmpConf, fncDir, filesDir):
@@ -180,9 +180,9 @@ def testDataShape_ToGeoJson(fn, tmpConf, fncDir, filesDir):
 
 @pytest.mark.parametrize(
     "fname, typ", [
-        ("simple_Fylker_0.json", shapely.geometry.Polygon),
-        ("simple_Kommuner_0.json", shapely.geometry.Polygon),
-        ("simple_Kommuner_291.json", shapely.geometry.MultiPolygon)
+        ("fylker_0.json", shapely.geometry.Polygon),
+        ("kommuner_0.json", shapely.geometry.Polygon),
+        ("kommuner_291.json", shapely.geometry.MultiPolygon)
     ]
 )
 @pytest.mark.data
@@ -235,7 +235,7 @@ def testDataShape_PolygonFromGeoJson(fname, typ, tmpConf, fncDir, filesDir, capl
 
 
 @pytest.mark.parametrize(
-    "fn", ["simple_Fylker_0.json", "simple_Kommuner_0.json", "simple_Kommuner_291.json"]
+    "fn", ["fylker_0.json", "kommuner_0.json", "kommuner_291.json"]
 )
 @pytest.mark.data
 def testDataShape_GeoJsonFromPolygon(fn, tmpConf, fncDir, filesDir, caplog):
