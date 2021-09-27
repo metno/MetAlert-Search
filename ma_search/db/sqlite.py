@@ -177,6 +177,117 @@ class SQLiteDB(Database):
 
         return True
 
+    def editAlertRecord(
+        self, cmd, recordUUID, identifier, sentDate, sourcePath, coordSystem,
+        west, south, east, north, altitude, ceiling, area
+    ):
+        """Insert or update a map record in the database.
+
+        Parameters
+        ----------
+        cmd : str
+            The command to be run on the database. Must be either "insert" or
+            "update".
+        recordUUID : str
+            The UUID of the dataset to be added or modified.
+        identifier : str
+            The unique identifier from the alert itself.
+        sentDate : datetime
+            The timestamp of when the alert was sent
+        sourcePath : str
+            The path to the CAP file.
+        coordSystem : str
+            The coordinate system (datum) used for this record.
+        west, south, east, north, altitude, ceiling, area : float
+            The coordinates in degrees of the bounding rectangle, the altitude
+            and ceiling of the alert, and the area of the polygon as reported
+            by shapely.
+
+        Returns
+        -------
+        bool :
+            True if successful, otherwise False
+        """
+        pUUID = None
+        valid = True
+
+        try:
+            pUUID = str(uuid.UUID(recordUUID))
+        except Exception:
+            logger.error("The UUID '%s' is not valid" % str(recordUUID))
+            logException()
+            valid = False
+
+        if not (-90.0 <= south < north <= 90.0):
+            logger.error("Coordinates must be in the range (-90 <= south < north <= 90)")
+            valid = False
+
+        if not (-180.0 <= west < east <= 180.0):
+            logger.error("Coordinates must be in the range (-180 <= west < east <= 180)")
+            valid = False
+
+        if ceiling < altitude:
+            logger.error("Ceiling must be greater or equal to altitude")
+            valid = False
+
+        if isinstance(sentDate, datetime):
+            sentDate = sentDate.isoformat()
+        else:
+            logger.error("SentDate must be a datetime object")
+            valid = False
+
+        if not valid:
+            logger.error("Incorrect parameters provided to editMapEntry")
+            return False
+
+        if cmd == "insert":
+            try:
+                self._conn.execute((
+                    "INSERT INTO AlertData ("
+                    "UUID, Identifier, SentDate, SourcePath, CoordSystem, "
+                    "BoundWest, BoundSouth, BoundEast, BoundNorth, Altitude, Ceiling, Area"
+                    ") VALUES ("
+                    "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+                    ");"
+                ), (
+                    pUUID, identifier, sentDate, sourcePath, coordSystem,
+                    west, south, east, north, altitude, ceiling, area
+                ))
+                self._conn.commit()
+            except Exception:
+                logException()
+                return False
+
+        elif cmd == "update":
+            try:
+                self._conn.execute((
+                    "UPDATE AlertData SET "
+                    "Identifier = ?, "
+                    "SentDate = ?, "
+                    "SourcePath = ?, "
+                    "CoordSystem = ?, "
+                    "BoundWest = ?, "
+                    "BoundSouth = ?, "
+                    "BoundEast = ?, "
+                    "BoundNorth = ?, "
+                    "Altitude = ?, "
+                    "Ceiling = ?, "
+                    "Area = ? "
+                    "WHERE UUID = '%s'"
+                ) % str(pUUID), (
+                    identifier, sentDate, sourcePath, coordSystem,
+                    west, south, east, north, altitude, ceiling, area
+                ))
+            except Exception:
+                logException()
+                return False
+
+        else:
+            logger.error("Unknown command '%s'" % cmd)
+            return False
+
+        return True
+
     ##
     #  Internal Functions
     ##
@@ -245,14 +356,16 @@ class SQLiteDB(Database):
                 "CREATE TABLE 'AlertData' (\n"
                 "  'ID'          INTEGER NOT NULL,\n"
                 "  'UUID'        TEXT NOT NULL UNIQUE,\n"
-                "  'Name'        TEXT NOT NULL,\n"
-                "  'RefDate'     TEXT,\n"
-                "  'Source'      TEXT NOT NULL,\n"
+                "  'Identifier'  TEXT NOT NULL,\n"
+                "  'SentDate'    TEXT NOT NULL,\n"
+                "  'SourcePath'  TEXT NOT NULL,\n"
                 "  'CoordSystem' TEXT NOT NULL,\n"
                 "  'BoundWest'   REAL NOT NULL,\n"
                 "  'BoundSouth'  REAL NOT NULL,\n"
                 "  'BoundEast'   REAL NOT NULL,\n"
                 "  'BoundNorth'  REAL NOT NULL,\n"
+                "  'Altitude'    REAL NOT NULL,\n"
+                "  'Ceiling'     REAL NOT NULL,\n"
                 "  'Area'        REAL NOT NULL,\n"
                 "  PRIMARY KEY('ID' AUTOINCREMENT)\n"
                 ");\n"

@@ -109,16 +109,16 @@ def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
 
 
 @pytest.mark.db
-def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
+def testDBSQLite_EditMapRecord(tmpConf, fncDir, caplog):
     """Test MapData table INSERT and UPDATE."""
-    dbFile = os.path.join(tmpDir, "index.db")
+    dbFile = os.path.join(fncDir, "index.db")
 
     tmpConf.dbProvider = "sqlite"
-    tmpConf.sqlitePath = tmpDir
+    tmpConf.sqlitePath = fncDir
 
     # Check that the db was created
     theDB = SQLiteDB()
-    assert theDB.conf.sqlitePath == tmpDir
+    assert theDB.conf.sqlitePath == fncDir
     assert os.path.isfile(dbFile)
     assert theDB._isNew is True
 
@@ -257,3 +257,153 @@ def testDBSQLite_EditMapRecord(tmpConf, tmpDir, caplog):
     assert "Unknown command 'blabla'" in caplog.text
 
 # END Test testDBSQLite_EditMapRecord
+
+
+@pytest.mark.db
+def testDBSQLite_EditAlertRecord(tmpConf, fncDir, caplog):
+    """Test MapData table INSERT and UPDATE."""
+    dbFile = os.path.join(fncDir, "index.db")
+
+    tmpConf.dbProvider = "sqlite"
+    tmpConf.sqlitePath = fncDir
+
+    # Check that the db was created
+    theDB = SQLiteDB()
+    assert theDB.conf.sqlitePath == fncDir
+    assert os.path.isfile(dbFile)
+    assert theDB._isNew is True
+
+    # Test Error Checking
+    # ===================
+    newUUID = str(uuid.uuid4())
+    mockDate = datetime(2021, 1, 1, 12, 0, 0)
+
+    # UUID Check
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID="stuff", identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-9, east=8, north=7, altitude=100, ceiling=200, area=272
+    ) is False
+    assert "The UUID 'stuff' is not valid" in caplog.text
+
+    # South-North Boundaries
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=newUUID, identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-200, east=8, north=7, altitude=100, ceiling=200, area=272
+    ) is False
+    assert "Coordinates must be in the range (-90 <= south < north <= 90)" in caplog.text
+
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=newUUID, identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-9, east=8, north=-17, altitude=100, ceiling=200, area=272
+    ) is False
+    assert "Coordinates must be in the range (-90 <= south < north <= 90)" in caplog.text
+
+    # East-West Boundaries
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=newUUID, identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-200, south=-9, east=8, north=7, altitude=100, ceiling=200, area=272
+    ) is False
+    assert "Coordinates must be in the range (-180 <= west < east <= 180)" in caplog.text
+
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=newUUID, identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-9, east=-18, north=7, altitude=100, ceiling=200, area=272
+    ) is False
+    assert "Coordinates must be in the range (-180 <= west < east <= 180)" in caplog.text
+
+    # Altitue-Ceiling
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=newUUID, identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-9, east=-8, north=7, altitude=300, ceiling=200, area=272
+    ) is False
+    assert "Ceiling must be greater or equal to altitude" in caplog.text
+
+    # Wrong DateTime
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=newUUID, identifier="mockAlert", sentDate=None,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-9, east=-8, north=7, altitude=100, ceiling=200, area=272
+    ) is False
+    assert "SentDate must be a datetime object" in caplog.text
+
+    # Database Insert
+    # ===============
+    newUUID = str(uuid.uuid4())
+
+    # Insert Valid New Record
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=newUUID, identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-9, east=8, north=7, altitude=100, ceiling=200, area=272
+    ) is True
+
+    cursor = theDB._conn.execute("SELECT * FROM AlertData;")
+    theData = cursor.fetchall()
+    assert theData[0] == (
+        1, newUUID, "mockAlert", mockDate.isoformat(), "mock.cap.xml", "WGS84",
+        -10.0, -9.0, 8.0, 7.0, 100.0, 200.0, 272.0
+    )
+
+    # Database Update
+    # ===============
+    assert theDB.editAlertRecord(
+        cmd="update", recordUUID=newUUID, identifier="mockAlert2", sentDate=mockDate,
+        sourcePath="mock2.cap.xml", coordSystem="WGS84",
+        west=-11, south=-10, east=7, north=6, altitude=50, ceiling=150, area=272
+    ) is True
+
+    cursor = theDB._conn.execute("SELECT * FROM AlertData;")
+    theData = cursor.fetchall()
+    assert theData[0] == (
+        1, newUUID, "mockAlert2", mockDate.isoformat(), "mock2.cap.xml", "WGS84",
+        -11.0, -10.0, 7.0, 6.0, 50.0, 150.0, 272.0
+    )
+
+    # SQL Error
+    # =========
+
+    # Insert: Non-unique UUID
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=newUUID, identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-9, east=8, north=7, altitude=100, ceiling=200, area=272
+    ) is False
+    assert "UNIQUE constraint failed: AlertData.UUID" in caplog.text
+
+    # Update: Set a required argument to None
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="update", recordUUID=newUUID, identifier=None, sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-9, east=8, north=7, altitude=100, ceiling=200, area=272
+    ) is False
+    assert "NOT NULL constraint failed: AlertData.Identifier" in caplog.text
+
+    # Other
+    # =====
+    newUUID = str(uuid.uuid4())
+
+    # Invalid Command
+    caplog.clear()
+    assert theDB.editAlertRecord(
+        cmd="blabla", recordUUID=newUUID, identifier=None, sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=-10, south=-9, east=8, north=7, altitude=100, ceiling=200, area=272
+    ) is False
+    assert "Unknown command 'blabla'" in caplog.text
+
+# END Test testDBSQLite_AlertMapRecord
