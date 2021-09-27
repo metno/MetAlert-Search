@@ -78,7 +78,7 @@ class Data():
         jFile = os.path.join(fPath, f"{fUUID}.json")
         if os.path.isfile(jFile) and not doReplace:
             logger.warning(
-                "CAP file with identifier '%s' already exists and is not being overwritter",
+                "CAP file with identifier '%s' already exists and is not being overwritten",
                 identifier
             )
             return False
