@@ -104,4 +104,10 @@ class Data():
 
         return True
 
+    def indexAlertCacheFile(self, path, data=None):
+        pass
+
+    def rebuildAlertIndex(self):
+        pass
+
 # END Class Data
