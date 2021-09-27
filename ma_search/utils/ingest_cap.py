@@ -22,7 +22,7 @@ def ingestCap(sysArgs):
         "Usage:\n"
         " -h, --help      Print this message.\n"
         " -r, --recursive Toggles wether to parse sub-directories\n"
-        " -o, --replace   Replace entries with matching identifier\n"
+        " -o, --overwrite Overwrite entries with matching identifier\n"
     )
 
     try:
