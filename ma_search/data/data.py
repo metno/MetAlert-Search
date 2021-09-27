@@ -17,12 +17,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
+import uuid
 import logging
 import ma_search
 
 from ma_search.data.capxml import CapXML
+from ma_search.data.shape import Shape
+from ma_search.common import preparePath, safeWriteJson
 
 logger = logging.getLogger(__name__)
+
+UUID_NS = uuid.uuid5(uuid.NAMESPACE_URL, "metalert.met.no")
 
 
 class Data():
@@ -41,9 +47,60 @@ class Data():
             logger.error("Could not parse CAP file: %s", str(path))
             return False
 
+        # Check the extracted data
+        # ========================
+
         identifier = capData["identifier"]
         if identifier is None:
+            logger.error("CAP file has no identifier: %s", str(path))
             return False
+
+        geoJson = capData.asGeoJson()
+        if geoJson is None:
+            logger.error("CAP file has no polygon: %s", str(path))
+            return False
+
+        shape = Shape.polygonFromGeoJson(geoJson)
+        if shape is None:
+            logger.error("Could not parse polygon: %s", str(path))
+            return False
+
+        # Save Meta Data
+        fUUID = str(uuid.uuid5(UUID_NS, identifier))
+        fPath = preparePath(self.conf.dataPath, "alert", fUUID)
+        if fPath is None:
+            logger.error("Could not create storage path")
+            return False
+
+        # Save the data
+        # =============
+
+        jFile = os.path.join(fPath, f"{fUUID}.json")
+        if os.path.isfile(jFile) and not doReplace:
+            logger.warning(
+                "CAP file with identifier '%s' already exists and is not being overwritter",
+                identifier
+            )
+            return False
+
+        area = shape.area
+        west, south, east, north = shape.bounds
+        safeWriteJson(jFile, {
+            "identifier": identifier,
+            "source": path,
+            "sent": capData["sent"],
+            "areaDesc": capData["areaDesc"],
+            "polygon": geoJson["geometry"],
+            "altitude": capData["altitude"],
+            "ceiling": capData["ceiling"],
+            "area": area,
+            "bounds": {
+                "west": west,
+                "east": east,
+                "north": north,
+                "south": south
+            }
+        }, indent=2)
 
         return True
 
