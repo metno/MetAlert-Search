@@ -27,9 +27,12 @@ from ma_search.data import Data
 
 
 @pytest.mark.data
-def testDataData_IngestAlertFile(monkeypatch, tmpConf, fncDir, filesDir):
+def testDataData_IngestAlertFile(monkeypatch, tmpConf, fncDir):
     """Test class initialisation."""
     tmpConf.dataPath = fncDir
+    tmpConf.dbProvider = "sqlite"
+    tmpConf.sqlitePath = fncDir
+
     data = Data()
     assert data.conf.dataPath == fncDir
 
@@ -69,6 +72,7 @@ def testDataData_IngestAlertFile(monkeypatch, tmpConf, fncDir, filesDir):
     writeFile(testCap, (
         "<alert>"
         "<identifier>mockAlert</identifier>"
+        "<sent>2021-09-27T16:00:00Z</sent>"
         "<info>"
         "<area>"
         "<polygon>1,1 1,2 2,2 2,1 1,1</polygon>"

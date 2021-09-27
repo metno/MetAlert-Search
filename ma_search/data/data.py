@@ -17,14 +17,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import json
 import os
 import uuid
 import logging
 import ma_search
 
+from ma_search.db import SQLiteDB
 from ma_search.data.capxml import CapXML
 from ma_search.data.shape import Shape
-from ma_search.common import preparePath, safeWriteJson
+from ma_search.common import parseDateString, preparePath, safeWriteJson, checkUUID
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,13 @@ UUID_NS = uuid.uuid5(uuid.NAMESPACE_URL, "metalert.met.no")
 class Data():
 
     def __init__(self):
+
         self.conf = ma_search.CONFIG
+
+        self._db = None
+        if self.conf.dbProvider == "sqlite":
+            self._db = SQLiteDB()
+
         return
 
     def ingestAlertFile(self, path, doReplace=False):
@@ -85,7 +93,7 @@ class Data():
 
         area = shape.area
         west, south, east, north = shape.bounds
-        safeWriteJson(jFile, {
+        jData = {
             "identifier": identifier,
             "source": path,
             "sent": capData["sent"],
@@ -100,12 +108,58 @@ class Data():
                 "north": north,
                 "south": south
             }
-        }, indent=2)
+        }
 
-        return True
+        status = True
+        status &= safeWriteJson(jFile, jData, indent=2)
+        status &= self.indexAlertMetaFile(jFile, data=jData, doReplace=doReplace)
 
-    def indexAlertCacheFile(self, path, data=None):
-        pass
+        return status
+
+    def indexAlertMetaFile(self, path, data=None, doReplace=False):
+        """Add an alert meta file to the index database. The file must
+        exist, but if the data variable is set, the file isn't read.
+        """
+        if self._db is None:
+            logger.error("No database specified or available")
+            return False
+
+        if not os.path.isfile(path):
+            logger.error("No such file: %s", path)
+            return False
+
+        jsonFile = os.path.basename(path)
+        fileUUID = jsonFile[:36]
+        if not (len(jsonFile) == 41 and jsonFile.endswith(".json") and checkUUID(fileUUID)):
+            logger.error("Skipping unknown file: %s", path)
+            return False
+
+        if data is None:
+            with open(path, mode="r") as inFile:
+                data = json.load(inFile)
+
+        bounds = data.get("bounds", {})
+        dbStat = self._db.editAlertRecord(
+            cmd="replace" if doReplace else "insert",
+            recordUUID=fileUUID,
+            identifier=data.get("identifier", None),
+            sentDate=parseDateString(data.get("sent", None)),
+            sourcePath=data.get("source", None),
+            coordSystem="WGS84",
+            west=bounds.get("west", None),
+            south=bounds.get("south", None),
+            east=bounds.get("east", None),
+            north=bounds.get("north", None),
+            altitude=data.get("altitude", None),
+            ceiling=data.get("ceiling", None),
+            area=data.get("area", None)
+        )
+        if dbStat:
+            logger.info("Indexed file: %s", path)
+        else:
+            logger.error("Failed to index file: %s", path)
+
+        return dbStat
 
     def rebuildAlertIndex(self):
         pass

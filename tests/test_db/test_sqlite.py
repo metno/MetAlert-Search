@@ -261,7 +261,7 @@ def testDBSQLite_EditMapRecord(tmpConf, fncDir, caplog):
 
 @pytest.mark.db
 def testDBSQLite_EditAlertRecord(tmpConf, fncDir, caplog):
-    """Test MapData table INSERT and UPDATE."""
+    """Test MapAlert table INSERT and UPDATE."""
     dbFile = os.path.join(fncDir, "index.db")
 
     tmpConf.dbProvider = "sqlite"

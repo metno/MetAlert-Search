@@ -68,8 +68,8 @@ class SQLiteDB(Database):
         Parameters
         ----------
         cmd : str
-            The command to be run on the database. Must be either "insert" or
-            "update".
+            The command to be run on the database. Must be either "insert",
+            "update" or "replace".
         recordUUID : str
             The UUID of the dataset to be added or modified.
         label : str
@@ -128,10 +128,10 @@ class SQLiteDB(Database):
             logger.error("Incorrect parameters provided to editMapEntry")
             return False
 
-        if cmd == "insert":
+        if cmd in ("insert", "replace"):
             try:
                 self._conn.execute((
-                    "INSERT INTO MapData ("
+                    f"{cmd.upper()} INTO MapData ("
                     "UUID, Label, Source, AdmName, AdmID, ValidFrom, ValidTo, "
                     "CoordSystem, BoundWest, BoundSouth, BoundEast, BoundNorth, Area"
                     ") VALUES ("
@@ -186,8 +186,8 @@ class SQLiteDB(Database):
         Parameters
         ----------
         cmd : str
-            The command to be run on the database. Must be either "insert" or
-            "update".
+            The command to be run on the database. Must be either "insert",
+            "update" or "replace".
         recordUUID : str
             The UUID of the dataset to be added or modified.
         identifier : str
@@ -240,10 +240,10 @@ class SQLiteDB(Database):
             logger.error("Incorrect parameters provided to editMapEntry")
             return False
 
-        if cmd == "insert":
+        if cmd in ("insert", "replace"):
             try:
                 self._conn.execute((
-                    "INSERT INTO AlertData ("
+                    f"{cmd.upper()} INTO AlertData ("
                     "UUID, Identifier, SentDate, SourcePath, CoordSystem, "
                     "BoundWest, BoundSouth, BoundEast, BoundNorth, Altitude, Ceiling, Area"
                     ") VALUES ("
