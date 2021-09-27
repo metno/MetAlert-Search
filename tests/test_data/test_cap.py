@@ -113,10 +113,11 @@ def testDataCap_AsGeoJson(filesDir, fncDir):
         "type": "Feature",
         "geometry": {
             "type": "MultiPolygon",
-            "coordinates": [
+            "coordinates": [[
                 [(34.0, 12.0), (78.0, 56.0)],
+            ], [
                 [(65.0, 87.0), (21.0, 43.0)]
-            ]
+            ]]
         }
     }
 

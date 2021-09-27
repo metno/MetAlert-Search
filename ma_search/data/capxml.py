@@ -57,25 +57,27 @@ class CapXML():
         if polygon is None:
             return None
 
-        if len(polygon) == 1:
-            type = "Polygon"
-        else:
-            type = "MultiPolygon"
-
+        isMulti = len(polygon) > 1
         geoJson = {
             "type": "Feature",
             "geometry": {
-                "type": type,
+                "type": "MultiPolygon" if isMulti else "Polygon",
                 "coordinates": []
             }
         }
 
+        coordData = []
         for subPoly in polygon:
             newSubPoly = []
             for latitude, longitude in subPoly:
                 newSubPoly.append((longitude, latitude))
             if newSubPoly:
-                geoJson["geometry"]["coordinates"].append(newSubPoly)
+                coordData.append([newSubPoly])
+
+        if len(coordData) == 1:
+            geoJson["geometry"]["coordinates"] = coordData[0]
+        else:
+            geoJson["geometry"]["coordinates"] = coordData
 
         return geoJson
 
