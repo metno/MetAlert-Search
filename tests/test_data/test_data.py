@@ -18,6 +18,7 @@ limitations under the License.
 """
 
 import os
+import json
 import pytest
 
 from tools import writeFile, causeOSError
@@ -70,7 +71,9 @@ def testDataData_IngestAlertFile(monkeypatch, tmpConf, fncDir, filesDir):
         "<identifier>mockAlert</identifier>"
         "<info>"
         "<area>"
-        "<polygon>1,2 3,4 5,6 7,8</polygon>"
+        "<polygon>1,1 1,2 2,2 2,1 1,1</polygon>"
+        "<altitude>0</altitude>"
+        "<ceiling>1</ceiling>"
         "</area>"
         "</info>"
         "</alert>"
@@ -89,5 +92,27 @@ def testDataData_IngestAlertFile(monkeypatch, tmpConf, fncDir, filesDir):
 
     # Allow overwrite
     assert data.ingestAlertFile(testCap, doReplace=True) is True
+
+    # Check the JSON file
+    jsonFile = os.path.join(
+        fncDir, "alert_4", "alert_f", "a35e85f4-b0d1-5b1f-9db0-79007f49be07.json"
+    )
+    assert os.path.isfile(jsonFile)
+    with open(jsonFile, mode="r") as inFile:
+        jsonData = json.load(inFile)
+
+    assert jsonData["identifier"] == "mockAlert"
+    assert jsonData["source"] == testCap
+    assert jsonData["polygon"]["type"] == "Polygon"
+    assert jsonData["polygon"]["coordinates"] == [[
+        [1.0, 1.0], [2.0, 1.0], [2.0, 2.0], [1.0, 2.0], [1.0, 1.0]
+    ]]
+    assert jsonData["altitude"] == 0.0
+    assert jsonData["ceiling"] == 1.0
+    assert jsonData["area"] == 1.0
+    assert jsonData["bounds"]["east"] == 2.0
+    assert jsonData["bounds"]["west"] == 1.0
+    assert jsonData["bounds"]["north"] == 2.0
+    assert jsonData["bounds"]["south"] == 1.0
 
 # END Test testDataData_IngestAlertFile
