@@ -25,7 +25,7 @@ from ma_search.utils import ingestCap
 
 
 @pytest.mark.utils
-def testUtil_Maintenance(filesDir, caplog):
+def testUtil_Maintenance(filesDir):
     """Tests Maintenance function in ma_search.__init__
     """
     with pytest.raises(SystemExit):
