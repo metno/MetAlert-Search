@@ -30,15 +30,20 @@ class CapXML():
 
         self._info = {}
         self._info["areaDesc"] = {}
-        capRoot = self._captree.getroot()
 
+        firstInfo = True
+        capRoot = self._captree.getroot()
         for capElem in capRoot:
             if self._localname(capElem) == "identifier":
                 self._info["identifier"] = capElem.text
             elif self._localname(capElem) == "sent":
                 self._info["sent"] = capElem.text
             elif self._localname(capElem) == "info":
-                self._parseInfo(capElem)
+                if firstInfo:
+                    self._parseInfo(capElem)
+                    firstInfo = False
+                else:
+                    self._appendDesc(capElem)
 
         return
 
@@ -95,7 +100,10 @@ class CapXML():
                 infoLang = infoElem.text
             elif self._localname(infoElem) == "area":
                 for areaElem in infoElem:
-                    if self._localname(areaElem) == "polygon":
+                    if self._localname(areaElem) == "areaDesc":
+                        infoAreaDesc = areaElem.text
+
+                    elif self._localname(areaElem) == "polygon":
                         tempList = []
                         for coords in areaElem.text.split(" "):
                             latitude, longitude = coords.split(",")
@@ -123,21 +131,39 @@ class CapXML():
                         if valueName and value:
                             geocodes.append((valueName, value))
 
-                    elif self._localname(areaElem) == "areaDesc":
-                        infoAreaDesc = areaElem.text
-
                     elif self._localname(areaElem) == "altitude":
                         altitude = checkFloat(areaElem.text, None)
 
                     elif self._localname(areaElem) == "ceiling":
                         ceiling = checkFloat(areaElem.text, None)
 
+        self._info["areaDesc"][infoLang] = infoAreaDesc
         self._info["polygon"] = polygonList if polygonList else None
         self._info["circle"] = circleList if circleList else None
         self._info["geocode"] = geocodes if geocodes else None
-        self._info["areaDesc"][infoLang] = infoAreaDesc
         self._info["altitude"] = altitude
         self._info["ceiling"] = ceiling
+
+        return
+
+    def _appendDesc(self, info):
+        """Parse additonal info blocks to append descriptions in other
+        languages.
+        """
+        infoLang = ""
+        infoAreaDesc = ""
+        for infoElem in info:
+            if self._localname(infoElem) == "language":
+                infoLang = infoElem.text
+            elif self._localname(infoElem) == "area":
+                for areaElem in infoElem:
+                    if self._localname(areaElem) == "areaDesc":
+                        infoAreaDesc = areaElem.text
+
+        if infoLang and infoAreaDesc:
+            self._info["areaDesc"][infoLang] = infoAreaDesc
+
+        return
 
     def _localname(self, etreeElem):
         """Helper function to do searches in the xml file, ignoring
