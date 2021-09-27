@@ -20,17 +20,7 @@ limitations under the License.
 import os
 import pytest
 
-from ma_search import maintenance
 from ma_search.utils import ingestCap
-
-
-@pytest.mark.utils
-def testUtil_Maintenance(filesDir):
-    """Tests Maintenance function in ma_search.__init__
-    """
-    with pytest.raises(SystemExit):
-        maintenance(["ingest_cap"])
-    maintenance(["filename", "ingest_cap", filesDir])
 
 
 @pytest.mark.utils
