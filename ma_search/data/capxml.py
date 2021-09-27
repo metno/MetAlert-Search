@@ -43,7 +43,36 @@ class CapXML():
         return
 
     def __getitem__(self, str):
+        """Return any item of the main data dictionary."""
         return self._info.get(str, None)
+
+    def asGeoJson(self):
+        """Return the main polygon as a geoJson dictionary."""
+        polygon = self._info.get("polygon", None)
+        if polygon is None:
+            return None
+
+        if len(polygon) == 1:
+            type = "Polygon"
+        else:
+            type = "MultiPolygon"
+
+        geoJson = {
+            "type": "Feature",
+            "geometry": {
+                "type": type,
+                "coordinates": []
+            }
+        }
+
+        for subPoly in polygon:
+            newSubPoly = []
+            for latitude, longitude in subPoly:
+                newSubPoly.append((longitude, latitude))
+            if newSubPoly:
+                geoJson["geometry"]["coordinates"].append(newSubPoly)
+
+        return geoJson
 
     ##
     #  Internal Functions
@@ -69,15 +98,18 @@ class CapXML():
                     if self._localname(areaElem) == "polygon":
                         tempList = []
                         for coords in areaElem.text.split(" "):
-                            x, y = coords.split(",")
-                            tempList.append((checkFloat(x, 0.0), checkFloat(y, 0.0)))
+                            latitude, longitude = coords.split(",")
+                            tempList.append((
+                                checkFloat(latitude, 0.0), checkFloat(longitude, 0.0)
+                            ))
                         polygonList.append(tempList)
 
                     elif self._localname(areaElem) == "circle":
                         coords, radius = areaElem.text.split(" ")
-                        x, y = coords.split(",")
+                        latitude, longitude = coords.split(",")
                         circleList.append((
-                            checkFloat(x, 0.0), checkFloat(y, 0.0), checkFloat(radius, 0.0)
+                            checkFloat(latitude, 0.0), checkFloat(longitude, 0.0),
+                            checkFloat(radius, 0.0)
                         ))
 
                     elif self._localname(areaElem) == "geocode":

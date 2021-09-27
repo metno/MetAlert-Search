@@ -21,13 +21,14 @@ import os
 import lxml
 import pytest
 
+from tools import writeFile
+
 from ma_search.data.capxml import CapXML
 
 
 @pytest.mark.data
 def testDataCap_Init(filesDir):
     """Test class initialisation."""
-
     with pytest.raises(OSError):
         CapXML("NONE")
 
@@ -39,11 +40,14 @@ def testDataCap_Init(filesDir):
     assert cap["identifier"] == "2.49.0.1.578.0.210921070421906.1705"
     assert cap["WrongName"] is None
 
+# END Test testDataCap_Init
+
 
 @pytest.mark.data
 def testDataCap_ParseInfo(filesDir):
     """Test parseInfo method with a correctly formatted capxml-file,
-    and a capxml-file with missing entries."""
+    and a capxml-file with missing entries.
+    """
     succPath = os.path.join(filesDir, "mock.cap.xml")
     failPath = os.path.join(filesDir, "mockFailing.cap.xml")
 
@@ -70,3 +74,50 @@ def testDataCap_ParseInfo(filesDir):
     assert cap["areaDesc"] == {"en": "Area1"}
     assert cap["altitude"] is None
     assert cap["ceiling"] is None
+
+# END Test testDataCap_ParseInfo
+
+
+@pytest.mark.data
+def testDataCap_AsGeoJson(filesDir, fncDir):
+    """Test the asGeoJson method of the CapXML class."""
+    # No Polygon
+    emptyFile = os.path.join(fncDir, "empty.xml")
+    writeFile(emptyFile, "<xml/>")
+    cap = CapXML(emptyFile)
+    assert cap["polygon"] is None
+    assert cap.asGeoJson() is None
+
+    # Polygon
+    cap = CapXML(os.path.join(filesDir, "mock.cap.xml"))
+    assert cap["polygon"] == [
+        [(12.0, 34.0), (56.0, 78.0)]
+    ]
+    assert cap.asGeoJson() == {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+                [(34.0, 12.0), (78.0, 56.0)]
+            ]
+        }
+    }
+
+    # MultiPolygon
+    cap = CapXML(os.path.join(filesDir, "mockMulti.cap.xml"))
+    assert cap["polygon"] == [
+        [(12.0, 34.0), (56.0, 78.0)],
+        [(87.0, 65.0), (43.0, 21.0)]
+    ]
+    assert cap.asGeoJson() == {
+        "type": "Feature",
+        "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+                [(34.0, 12.0), (78.0, 56.0)],
+                [(65.0, 87.0), (21.0, 43.0)]
+            ]
+        }
+    }
+
+# END Test testDataCap_AsGeoJson
