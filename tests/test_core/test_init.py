@@ -26,6 +26,7 @@ import ma_search
 
 from tools import readFile
 
+from ma_search import maintenance
 from ma_search.config import Config
 
 
@@ -100,3 +101,13 @@ def testCoreInit_ApiMain(monkeypatch, rootDir):
     assert sysExit.value.code is None
 
 # END Test testCoreInit_ApiMain
+
+
+@pytest.mark.core
+def testCoreInit_Maintenance(filesDir):
+    """Tests Maintenance function."""
+    with pytest.raises(SystemExit):
+        maintenance(["ingest_cap"])
+    maintenance(["filename", "ingest_cap", filesDir])
+
+# END Test testCoreInit_Maintenance
