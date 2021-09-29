@@ -59,6 +59,13 @@ class SQLiteDB(Database):
     #  Database Methods
     ##
 
+    def purgeMapTable(self):
+        """Purge all map data and start fresh."""
+        status = True
+        status &= self._dropMapTable()
+        status &= self._createMapTable()
+        return status
+
     def purgeAlertTable(self):
         """Purge all alert data and start fresh."""
         status = True
@@ -380,6 +387,24 @@ class SQLiteDB(Database):
                 "  'Area'        REAL NOT NULL,\n"
                 "  PRIMARY KEY('ID' AUTOINCREMENT)\n"
                 ");\n"
+            )
+            self._conn.commit()
+
+        except Exception:
+            logException()
+            return False
+
+        return True
+
+    def _dropMapTable(self):
+        """Drop the current index table for map entries."""
+        if not isinstance(self._conn, sqlite3.Connection):
+            logger.error("No database connection open")
+            return False
+
+        try:
+            self._conn.execute(
+                "DROP TABLE 'MapData';\n"
             )
             self._conn.commit()
 

@@ -39,3 +39,10 @@ def causeOSError(*args, **kwargs):
     OSError when called.
     """
     raise OSError("Test OSError")
+
+
+def causeException(*args, **kwargs):
+    """This function will take any arguments and always raise an
+    Exception when called.
+    """
+    raise Exception("Test Exception")

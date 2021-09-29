@@ -19,7 +19,6 @@ limitations under the License.
 
 import os
 import uuid
-
 import pytest
 
 from datetime import datetime
@@ -106,6 +105,75 @@ def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
     assert "No database connection open" in caplog.text
 
 # END Test testDBSQLite_CreateTable
+
+
+@pytest.mark.db
+def testDBSQLite_DropTable(caplog, monkeypatch, tmpConf, fncDir):
+    """Test dropping tables DB."""
+    dbFile = os.path.join(fncDir, "index.db")
+
+    tmpConf.dbProvider = "sqlite"
+    tmpConf.sqlitePath = fncDir
+
+    # Check that the db was created
+    theDB = SQLiteDB()
+    assert theDB.conf.sqlitePath == fncDir
+    assert os.path.isfile(dbFile)
+    assert theDB._isNew is True
+
+    # Check that the two tables were created
+    cursor = theDB._conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    cursor.close()
+    assert ("MapData",) in tables
+    assert ("AlertData",) in tables
+
+    # Block the sqlite execute command
+    os.rename(os.path.join(fncDir, "index.db"), os.path.join(fncDir, "index.tmp"))
+    assert theDB._dropMapTable() is False
+    assert theDB._dropAlertTable() is False
+    os.rename(os.path.join(fncDir, "index.tmp"), os.path.join(fncDir, "index.db"))
+
+    # Drop the tables
+    assert theDB._dropMapTable() is True
+    assert theDB._dropAlertTable() is True
+
+    # Check that the two tables are gone
+    cursor = theDB._conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    cursor.close()
+    assert ("MapData",) not in tables
+    assert ("AlertData",) not in tables
+
+    # Run the Purge twice. Should fail first and pass second
+    assert theDB.purgeMapTable() is False
+    assert theDB.purgeMapTable() is True
+    assert theDB.purgeAlertTable() is False
+    assert theDB.purgeAlertTable() is True
+
+    # Check that the two tables were created again
+    cursor = theDB._conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    cursor.close()
+    assert ("MapData",) in tables
+    assert ("AlertData",) in tables
+
+    # DB connection set to None
+    theDB._conn = None
+
+    caplog.clear()
+    assert theDB._dropMapTable() is False
+    assert "No database connection open" in caplog.text
+
+    caplog.clear()
+    assert theDB._dropAlertTable() is False
+    assert "No database connection open" in caplog.text
+
+    # Cleanup
+    os.unlink(dbFile)
+    assert not os.path.isfile(dbFile)
+
+# END Test testDBSQLite_DropTable
 
 
 @pytest.mark.db
