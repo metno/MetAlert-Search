@@ -20,12 +20,13 @@ limitations under the License.
 import os
 import json
 import pytest
+import datetime
 
 from tools import readFile, writeFile, causeOSError
 
 from ma_search.common import (
     checkFloat, preparePath, safeMakeDir, safeMakeDirs, safeWriteString,
-    safeWriteJson, safeLoadString, safeLoadJson, checkUUID
+    safeWriteJson, safeLoadString, safeLoadJson, checkUUID, parseDateString
 )
 
 
@@ -242,3 +243,18 @@ def testCoreCommon_CheckUUID():
     assert checkUUID("e1600641-e537-4d40-8d2f-2fd2c7c457c6") == testUUID
 
 # END Test testCoreCommon_CheckUUID
+
+
+@pytest.mark.core
+def testCoreCommon_ParseDateString():
+    """Test the parseDateString function."""
+    assert parseDateString("") is None
+    assert parseDateString(123) is None
+
+    dtObj = parseDateString("2021-09-21T07:04:21+00:00")
+    assert dtObj == datetime.datetime(2021, 9, 21, 7, 4, 21, tzinfo=datetime.timezone.utc)
+
+    dtObj = parseDateString("2021-09-21T07:04:21Z")
+    assert dtObj == datetime.datetime(2021, 9, 21, 7, 4, 21, tzinfo=datetime.timezone.utc)
+
+# END Test testCoreCommon_ParseDateString

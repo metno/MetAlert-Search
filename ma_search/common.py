@@ -22,6 +22,7 @@ import sys
 import json
 import uuid
 import logging
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +217,7 @@ def logException():
     used in try/except structures to make the exception easier to read.
     """
     exType, exValue, _ = sys.exc_info()
-    logger.error("%s: %s" % (exType.__name__, str(exValue).strip("'")))
+    logger.error("%s: %s" % (exType.__name__, str(exValue)))
 
 
 def checkUUID(value):
@@ -242,3 +243,21 @@ def checkUUID(value):
         logger.error("Could not parse '%s' as a UUID", str(value))
         logException()
         return None
+
+
+def parseDateString(value, default=None):
+    """A more robust parser for date strings. If new formats need to be
+    supported, extend this function.
+    """
+    if not isinstance(value, str):
+        return default
+
+    if value.endswith("Z"):
+        value = value.rstrip("+Z")+"+00:00"
+
+    try:
+        parsed = datetime.datetime.fromisoformat(value)
+    except Exception:
+        return default
+
+    return parsed

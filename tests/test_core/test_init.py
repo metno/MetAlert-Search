@@ -104,8 +104,10 @@ def testCoreInit_ApiMain(monkeypatch, rootDir):
 
 
 @pytest.mark.core
-def testCoreInit_Maintenance(filesDir):
+def testCoreInit_Maintenance(filesDir, tmpConf, fncDir):
     """Tests Maintenance function."""
+    tmpConf.dataPath = fncDir
+
     with pytest.raises(SystemExit):
         maintenance(["ingest_cap"])
     maintenance(["filename", "ingest_cap", filesDir])
