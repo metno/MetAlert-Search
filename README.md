@@ -28,6 +28,6 @@ To add logging to file, specify the file by setting the environment variable `MA
 
 ## Scripts
 
-An overview of handy scripts e.g. for importing boundaries of administrative regions to the database
-can be found in the scripts folder. Note that they may not be maintained, and are not subject to the CI
-routines.
+An overview of handy scripts e.g. for importing boundaries of administrative regions to the
+database can be found in the scripts folder. Note that they may not be maintained, and are not
+subject to the CI routines.

@@ -108,7 +108,7 @@ def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
 
 
 @pytest.mark.db
-def testDBSQLite_DropTable(caplog, monkeypatch, tmpConf, fncDir):
+def testDBSQLite_DropTable(caplog, tmpConf, fncDir):
     """Test dropping tables DB."""
     dbFile = os.path.join(fncDir, "index.db")
 
