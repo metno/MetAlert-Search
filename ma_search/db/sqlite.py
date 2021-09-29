@@ -56,6 +56,30 @@ class SQLiteDB(Database):
         return
 
     ##
+    #  Search Methods
+    ##
+
+    def searchBounds(self, target, west, south, east, north):
+        """Find all entries in target where the bounds rectangle
+        overlaps.
+        """
+        tableMap = {"alert": "AlertData", "map": "MapData"}
+        dRecords = []
+        try:
+            cursor = self._conn.execute((
+                f"SELECT * FROM {tableMap[target]} WHERE\n"
+                "? < BoundEast AND ? > BoundWest AND ? > BoundSouth AND ? < BoundNorth;\n"
+            ), (west, east, north, south))
+            dRecords = cursor.fetchall()
+            cursor.close()
+
+        except Exception:
+            logException()
+            return None
+
+        return dRecords
+
+    ##
     #  Database Methods
     ##
 
@@ -185,6 +209,7 @@ class SQLiteDB(Database):
                     label, source, admName, admID, fromDate, toDate,
                     coordSystem, west, south, east, north, area
                 ))
+                self._conn.commit()
             except Exception:
                 logException()
                 return False
@@ -296,6 +321,7 @@ class SQLiteDB(Database):
                     identifier, sentDate, sourcePath, coordSystem,
                     west, south, east, north, altitude, ceiling, area
                 ))
+                self._conn.commit()
             except Exception:
                 logException()
                 return False
