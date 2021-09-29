@@ -56,6 +56,17 @@ class SQLiteDB(Database):
         return
 
     ##
+    #  Database Methods
+    ##
+
+    def purgeAlertTable(self):
+        """Purge all alert data and start fresh."""
+        status = True
+        status &= self._dropAlertTable()
+        status &= self._createAlertTable()
+        return status
+
+    ##
     #  Data Methods
     ##
 
@@ -369,6 +380,24 @@ class SQLiteDB(Database):
                 "  'Area'        REAL NOT NULL,\n"
                 "  PRIMARY KEY('ID' AUTOINCREMENT)\n"
                 ");\n"
+            )
+            self._conn.commit()
+
+        except Exception:
+            logException()
+            return False
+
+        return True
+
+    def _dropAlertTable(self):
+        """Drop the current index table for alerts."""
+        if not isinstance(self._conn, sqlite3.Connection):
+            logger.error("No database connection open")
+            return False
+
+        try:
+            self._conn.execute(
+                "DROP TABLE 'AlertData';\n"
             )
             self._conn.commit()
 

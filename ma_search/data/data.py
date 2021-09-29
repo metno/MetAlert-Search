@@ -45,8 +45,12 @@ class Data():
 
         return
 
+    ##
+    #  Alert (CAP) File Methods
+    ##
+
     def ingestAlertFile(self, path, doReplace=False):
-        """Ingest a CAP file, generate the meta data JSON files and
+        """Ingest a CAP file, generate the meta data JSON file and
         add it to the index database.
         """
         try:
@@ -146,13 +150,13 @@ class Data():
             sentDate=parseDateString(data.get("sent", None)),
             sourcePath=data.get("source", None),
             coordSystem="WGS84",
-            west=bounds.get("west", None),
-            south=bounds.get("south", None),
-            east=bounds.get("east", None),
-            north=bounds.get("north", None),
-            altitude=data.get("altitude", None),
-            ceiling=data.get("ceiling", None),
-            area=data.get("area", None)
+            west=bounds.get("west", 0.0),
+            south=bounds.get("south", 0.0),
+            east=bounds.get("east", 0.0),
+            north=bounds.get("north", 0.0),
+            altitude=data.get("altitude", 0.0),
+            ceiling=data.get("ceiling", 0.0),
+            area=data.get("area", 0.0)
         )
         if dbStat:
             logger.info("Indexed file: %s", path)
@@ -162,6 +166,34 @@ class Data():
         return dbStat
 
     def rebuildAlertIndex(self):
-        pass
+        """Rebuild the index of alert files saved in the data cache
+        folder.
+        """
+        if self._db is None:
+            logger.error("No database specified or available")
+            return False
+
+        if not self._db.purgeAlertTable():
+            logger.error("Could not clear old database")
+            return False
+
+        for dirOne in os.listdir(self.conf.dataPath):
+            pathOne = os.path.join(self.conf.dataPath, dirOne)
+            if not (os.path.isdir(pathOne) and dirOne.startswith("alert_")):
+                logger.info("Skipping: %s", pathOne)
+                continue
+            for dirTwo in os.listdir(pathOne):
+                pathTwo = os.path.join(pathOne, dirTwo)
+                if not (os.path.isdir(pathTwo) and dirTwo.startswith("alert_")):
+                    logger.info("Skipping: %s", dirTwo)
+                    continue
+                for jsonFile in os.listdir(pathTwo):
+                    jsonPath = os.path.join(pathTwo, jsonFile)
+                    if not (os.path.isfile(jsonPath) and jsonFile.endswith(".json")):
+                        logger.info("Skipping: %s", dirTwo)
+                        continue
+                    self.indexAlertMetaFile(jsonPath)
+
+        return True
 
 # END Class Data

@@ -1,0 +1,44 @@
+{
+  "identifier": "mockAlertTwo",
+  "source": "/home/vkbo/Work/WeaMyL/Code/MetAlert-Search/tests/temp/f_temp/good.cap.xml",
+  "sent": "2021-09-27T16:00:00Z",
+  "areaDesc": {
+    "en": ""
+  },
+  "polygon": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          1.0,
+          1.0
+        ],
+        [
+          2.0,
+          1.0
+        ],
+        [
+          2.0,
+          2.0
+        ],
+        [
+          1.0,
+          2.0
+        ],
+        [
+          1.0,
+          1.0
+        ]
+      ]
+    ]
+  },
+  "altitude": 0.0,
+  "ceiling": 1.0,
+  "area": 1.0,
+  "bounds": {
+    "west": 1.0,
+    "east": 2.0,
+    "north": 2.0,
+    "south": 1.0
+  }
+}
