@@ -32,8 +32,8 @@
       ]
     ]
   },
-  "altitude": 0.0,
-  "ceiling": 1.0,
+  "altitude": 1.0,
+  "ceiling": 2.0,
   "area": 1.0,
   "bounds": {
     "west": 1.0,

@@ -21,6 +21,7 @@ import os
 import json
 import shutil
 import pytest
+import shapely.geometry
 
 from tools import writeFile, causeOSError
 
@@ -28,8 +29,101 @@ from ma_search.data import Data
 
 
 @pytest.mark.data
+def testDataData_FindOverlap(tmpConf, fncDir, filesDir):
+    """Test overlap search."""
+    tmpConf.dataPath = fncDir
+    tmpConf.dbProvider = None
+    tmpConf.sqlitePath = None
+
+    # Before DB init
+    data = Data()
+    assert data.conf.dataPath == fncDir
+    assert data.findOverlap("alert", None) is None
+
+    # Init properly
+    tmpConf.dbProvider = "sqlite"
+    tmpConf.sqlitePath = fncDir
+    data = Data()
+    assert data.conf.dataPath == fncDir
+    assert data.findOverlap("alert", None) is None
+
+    # Build a mock archive
+    dirsOne = os.path.join(fncDir, "alert_6", "alert_d")
+    dirsTwo = os.path.join(fncDir, "alert_4", "alert_f")
+    os.makedirs(dirsOne)
+    os.makedirs(dirsTwo)
+    fileOne = "957773d6-bc0d-5a72-be5e-27801d28e82b.json"
+    fileTwo = "a35e85f4-b0d1-5b1f-9db0-79007f49be07.json"
+    shutil.copyfile(
+        os.path.join(filesDir, "test_archive", fileOne), os.path.join(dirsOne, fileOne)
+    )
+    shutil.copyfile(
+        os.path.join(filesDir, "test_archive", fileTwo), os.path.join(dirsTwo, fileTwo)
+    )
+    assert data.rebuildAlertIndex() is True
+
+    # Create a test polygon
+    geoJson = {
+        "type": "Polygon",
+        "coordinates": [
+            [[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5], [0.5, 0.5]]
+        ]
+    }
+    shape = shapely.geometry.shape(geoJson)
+
+    # Alert Search
+    # ============
+
+    # Default Values
+    result = data.findOverlap("alert", shape)
+    assert result is not None
+    assert result["maxres"] == 1000
+    assert result["records"] == 2
+    assert len(result["results"]) == 2
+
+    assert result["results"][0]["overlap"] == 0.25
+    assert result["results"][0]["bounds"]["east"] == 2.0
+    assert result["results"][0]["bounds"]["west"] == 1.0
+    assert result["results"][0]["bounds"]["north"] == 2.0
+    assert result["results"][0]["bounds"]["south"] == 1.0
+
+    assert result["results"][1]["overlap"] == 0.25
+    assert result["results"][0]["bounds"]["east"] == 2.0
+    assert result["results"][0]["bounds"]["west"] == 1.0
+    assert result["results"][0]["bounds"]["north"] == 2.0
+    assert result["results"][0]["bounds"]["south"] == 1.0
+
+    # Max Results
+    result = data.findOverlap("alert", shape, maxres=1)
+    assert result is not None
+    assert result["maxres"] == 1
+    assert result["records"] == 1
+    assert len(result["results"]) == 1
+    assert result["results"][0]["overlap"] == 0.25
+
+    # Vertical Range
+    result = data.findOverlap("alert", shape, vertical=(-1.0, 0.8))
+    assert result is not None
+    assert result["maxres"] == 1000
+    assert result["records"] == 1
+    assert len(result["results"]) == 1
+    assert result["results"][0]["overlap"] == 0.25
+    assert result["results"][0]["altitude"] == 0.0
+    assert result["results"][0]["ceiling"] == 1.0
+
+    # Map Search
+    # ==========
+
+    # Default Values
+    result = data.findOverlap("map", shape)
+    assert result is not None
+
+# END Test testDataData_FindOverlap
+
+
+@pytest.mark.data
 def testDataData_IngestAlertFile(monkeypatch, tmpConf, fncDir):
-    """Test class initialisation."""
+    """Test alert file ingestion."""
     tmpConf.dataPath = fncDir
     tmpConf.dbProvider = "sqlite"
     tmpConf.sqlitePath = fncDir
@@ -224,3 +318,26 @@ def testDataData_RebuildAlertIndex(tmpConf, fncDir, filesDir):
     assert data.rebuildAlertIndex() is True
 
 # END Test testDataData_RebuildAlertIndex
+
+
+@pytest.mark.data
+def testDataData_Internals(monkeypatch, tmpConf, fncDir, filesDir):
+    """Test internal functions."""
+    tmpConf.dataPath = fncDir
+    data = Data()
+
+    # Build a mock archive
+    dirsOne = os.path.join(fncDir, "alert_6", "alert_d")
+    os.makedirs(dirsOne)
+    fileOne = "957773d6-bc0d-5a72-be5e-27801d28e82b.json"
+    shutil.copyfile(
+        os.path.join(filesDir, "test_archive", fileOne), os.path.join(dirsOne, fileOne)
+    )
+
+    result = data._getFileData("alter", "957773d6-bc0d-5a72-be5e-27801d28e82b")
+    assert result != {}
+
+    result = data._getFileData("alter", None)
+    assert result == {}
+
+# END Test testDataData_Internals

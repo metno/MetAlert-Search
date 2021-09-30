@@ -23,10 +23,14 @@ import uuid
 import logging
 import ma_search
 
+from shapely.geometry import Polygon, MultiPolygon
+
 from ma_search.db import SQLiteDB
 from ma_search.data.capxml import CapXML
 from ma_search.data.shape import Shape
-from ma_search.common import parseDateString, preparePath, safeWriteJson, checkUUID
+from ma_search.common import (
+    logException, parseDateString, preparePath, safeLoadJson, safeWriteJson, checkUUID
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +48,81 @@ class Data():
             self._db = SQLiteDB()
 
         return
+
+    ##
+    #  Methods
+    ##
+
+    def findOverlap(self, target, shape, vertical=None, cutoff=0.01, maxres=1000):
+        """Parse a search dictionary and get values.
+        """
+        if self._db is None:
+            logger.error("No database specified or available")
+            return None
+
+        if not isinstance(shape, (Polygon, MultiPolygon)):
+            logger.error("Parameter 'shape' must be a shapely polygon")
+            return None
+
+        area = shape.area
+        west, south, east, north = shape.bounds
+
+        # First Pass: DB Lookup
+        # =====================
+
+        passTwo = {}
+        if target == "map":
+            pass
+            # passOne = self._db.searchBounds(target, west, south, east, north)
+            # for entry in passOne:
+            #     if len(entry) == 14:
+            #         recUUID = entry[1]
+            #         recArea = entry[13]
+            #         passTwo[recUUID] = recArea
+
+        elif target == "alert":
+            passOne = self._db.searchBounds(target, west, south, east, north)
+            for entry in passOne:
+                if len(entry) == 13:
+                    recUUID = entry[1]
+                    recZMin = entry[10]
+                    recZMax = entry[11]
+                    recArea = entry[12]
+                    if vertical is None:
+                        passTwo[recUUID] = recArea
+                    else:
+                        if vertical[0] < recZMax and vertical[1] > recZMin:
+                            passTwo[recUUID] = recArea
+
+        # Second Pass: Polygon Overlap
+        # ============================
+
+        result = {
+            "records": 0,
+            "maxres": maxres,
+            "results": [],
+        }
+
+        if target == "map":
+            pass
+
+        elif target == "alert":
+            for recNum, (recUUID, recArea) in enumerate(passTwo.items()):
+                if recNum >= maxres:
+                    break
+                data = self._getFileData(target, recUUID)
+                logger.error(str(data))
+                recShape = Shape.polygonFromGeoJson(data.get("polygon", {}))
+                if recShape is not None:
+                    isectShape = shape.intersection(recShape)
+                    overlap = isectShape.area / area
+                    if overlap >= cutoff:
+                        data["overlap"] = overlap
+                        result["results"].append(data)
+
+            result["records"] = len(result["results"])
+
+        return result
 
     ##
     #  Alert (CAP) File Methods
@@ -195,5 +274,20 @@ class Data():
                     self.indexAlertMetaFile(jsonPath)
 
         return True
+
+    ##
+    #  Internal Functions
+    ##
+
+    def _getFileData(self, target, fUUID):
+        """Load data from a file based on its uuid."""
+        try:
+            dirOne = f"{target}_{fUUID[7]}"
+            dirTwo = f"{target}_{fUUID[6]}"
+            filePath = os.path.join(self.conf.dataPath, dirOne, dirTwo, f"{fUUID}.json")
+            return safeLoadJson(filePath)
+        except Exception:
+            logException()
+            return {}
 
 # END Class Data

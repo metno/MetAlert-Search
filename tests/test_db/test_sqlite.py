@@ -108,7 +108,7 @@ def testDBSQLite_CreateTable(tmpConf, tmpDir, caplog):
 
 
 @pytest.mark.db
-def testDBSQLite_DropTable(caplog, monkeypatch, tmpConf, fncDir):
+def testDBSQLite_DropTable(caplog, tmpConf, fncDir):
     """Test dropping tables DB."""
     dbFile = os.path.join(fncDir, "index.db")
 
@@ -174,6 +174,84 @@ def testDBSQLite_DropTable(caplog, monkeypatch, tmpConf, fncDir):
     assert not os.path.isfile(dbFile)
 
 # END Test testDBSQLite_DropTable
+
+
+@pytest.mark.db
+def testDBSQLite_SearchBounds(tmpConf, fncDir):
+    """Test searchBounds function."""
+    dbFile = os.path.join(fncDir, "index.db")
+
+    tmpConf.dataPath = fncDir
+    tmpConf.dbProvider = "sqlite"
+    tmpConf.sqlitePath = fncDir
+
+    theDB = SQLiteDB()
+    assert theDB.conf.sqlitePath == fncDir
+    assert os.path.isfile(dbFile)
+
+    # MapData Table
+    # =============
+
+    # Insert some data
+    uuidOne = str(uuid.uuid4())
+    uuidTwo = str(uuid.uuid4())
+    assert theDB.editMapRecord(
+        cmd="insert", recordUUID=uuidOne, label="test label", source="test source",
+        coordSystem="WGS84", west=1, south=1, east=5, north=5, area=16,
+    ) is True
+    assert theDB.editMapRecord(
+        cmd="insert", recordUUID=uuidTwo, label="test label", source="test source",
+        coordSystem="WGS84", west=6, south=6, east=10, north=10, area=16,
+    ) is True
+
+    cursor = theDB._conn.execute("SELECT ID FROM MapData;")
+    records = cursor.fetchall()
+    cursor.close()
+    assert len(records) == 2
+
+    # Search
+    assert theDB.searchBounds("map", 0, 0, 3, 3)[0][1] == uuidOne
+    assert theDB.searchBounds("map", 7, 7, 9, 9)[0][1] == uuidTwo
+    assert len(theDB.searchBounds("map", 0, 0, 9, 9)) == 2
+
+    # AlertData Table
+    # ===============
+
+    # Insert some data
+    uuidOne = str(uuid.uuid4())
+    uuidTwo = str(uuid.uuid4())
+    mockDate = datetime(2021, 1, 1, 12, 0, 0)
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=uuidOne, identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=1, south=1, east=5, north=5, altitude=100, ceiling=200, area=16
+    ) is True
+    assert theDB.editAlertRecord(
+        cmd="insert", recordUUID=uuidTwo, identifier="mockAlert", sentDate=mockDate,
+        sourcePath="mock.cap.xml", coordSystem="WGS84",
+        west=6, south=6, east=10, north=10, altitude=100, ceiling=200, area=16
+    ) is True
+
+    cursor = theDB._conn.execute("SELECT ID FROM MapData;")
+    records = cursor.fetchall()
+    cursor.close()
+    assert len(records) == 2
+
+    # Search
+    assert theDB.searchBounds("alert", 0, 0, 3, 3)[0][1] == uuidOne
+    assert theDB.searchBounds("alert", 7, 7, 9, 9)[0][1] == uuidTwo
+    assert len(theDB.searchBounds("alert", 0, 0, 9, 9)) == 2
+
+    # Test Error
+    theConn = theDB._conn
+    theDB._conn = None
+    assert theDB.searchBounds("map", 0, 0, 3, 3) is None
+    assert theDB.searchBounds("alert", 0, 0, 3, 3) is None
+    theDB._conn = theConn
+
+    del theConn
+
+# END Test testDBSQLite_SearchBounds
 
 
 @pytest.mark.db
