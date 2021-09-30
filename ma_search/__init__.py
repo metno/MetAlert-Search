@@ -82,10 +82,12 @@ CONFIG = Config()
 def apiMain():
     """This is the main entry point for the api process.
     """
+    from ma_search.api import app
+
     if not CONFIG.readConfig(configFile=os.environ.get("MA_SEARCH_CONFIG", None)):
         sys.exit(1)
 
-    sys.exit()
+    sys.exit(app.run())
 
 # END apiMain
 
