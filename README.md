@@ -18,6 +18,47 @@ A config file must be provided in yaml format. It should either be named `config
 in the root folder of the source, or, alternatively, a full path to a valid yaml config file
 specified with the environment variable `MA_SEARCH_CONFIG`.
 
+## Search API
+
+The main search API entry point is `/v1/search/<target>` where `<target>` is either `alert` for
+searching the alert (CAP) file archive, or `map` for searching the map archive.
+
+The search parameters must be submitted as JSON with the `POST` method.
+
+The following keys can be set in the root JSON object:
+
+* `"polygon"` (Required) A GeoJson entry with either a Polygon or a MultiPolygon object.
+* `"vertical"` (Optional) An array of two floats or integers containing a minimum and maximum value
+  to be matched against the altitude and ceiling parameters in the CAP files.
+* `"cutoff"` (Optional) A float number greater than `0.0` and less or equal to `1.0`. Relative area
+  overlaps smaller than this cutoff will not be returned in the result. Defaults to `0.01`.
+* `"maxres"` (Optional) An integer lager than `0` with the maximum number of results to return from
+  the search. Computing overlap between large polygons can be quite slow, so if you use very
+  complex polygons, you may want to limit this number. Defaults to `1000`.
+
+**Example:**
+
+```python
+{
+    "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+            [[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5], [0.5, 0.5]]
+        ]
+    },
+    "vertical": [0, 1000],
+    "cutoff": 0.25,
+    "maxres": 100
+}
+```
+
+## Maintenance Script
+
+Only searches can be performed via the API. Ingestion of data must be done via a maintenance script
+from command line. The root script is `maintenance.py` which has its own commands and switches.
+
+Please run `./maintenance.py --help` for more information.
+
 ## Logging
 
 The default logging level is `INFO`. This can be changed by setting the environment variable
