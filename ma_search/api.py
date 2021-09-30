@@ -17,21 +17,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from flask import Flask
+from flask import Flask, request
 
 from ma_search.data import Data
 
-api = Flask(__name__)
+app = Flask(__name__)
 data = Data()
 
 
-@api.route("/v1/search/<target>", methods=["POST"])
+@app.route("/v1/search/<target>", methods=["POST"])
 def apiV1Search(target):
     """The main search entry point.
     """
     if target == "coffee":
+        # Mock call for testing that the API is up and responds
         return "I'm a teapot", 418
-    elif target not in ("map", "cap"):
+
+    elif target not in ("map", "alert"):
         return f"No such search target '{target}'", 404
+
+    # Decode payload
+    data = request.get_json(force=False, silent=True, cache=False)
+    if not isinstance(data, dict):
+        return "Could not parse JSON payload", 400
 
     return "Yay!", 200

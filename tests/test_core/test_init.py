@@ -71,19 +71,10 @@ def testCoreInit_Logger(tmpDir):
 @pytest.mark.core
 def testCoreInit_ApiMain(monkeypatch, rootDir):
     """Test the API entry point function.
-
-    Note: Not yet complete as the API class has not been added.
     """
-    # class mockAPI():
-    #     def __init__(self):
-    #         pass
-
-    #     def run(self):
-    #         return
-
     exampleConf = os.path.join(rootDir, "example_config.yaml")
     monkeypatch.setenv("MA_SEARCH_CONFIG", exampleConf)
-    # monkeypatch.setattr("ma_search.api.App", mockAPI)
+    monkeypatch.setattr("ma_search.api.app.run", lambda: None)
 
     # Invalid config
     with pytest.raises(SystemExit) as sysExit:
