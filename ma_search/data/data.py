@@ -276,6 +276,69 @@ class Data():
         return True
 
     ##
+    #  Map File Methods
+    ##
+
+    def ingestMapFile(self, path, doReplace=False):
+        """Ingest a map file, generate the meta data JSON file and
+        add it to the index database.
+        """
+
+        # TO DO, to be called by import_from_kartverket?
+        pass
+
+    def indexMap(self, path, data=None, doReplace=False):
+        """Add a map file to the map database. The file must
+        exist, but if the data variable is set, the file isn't read.
+        """
+
+        if self._db is None:
+            logger.error("No database specified or available")
+            return False
+
+        if not os.path.isfile(path):
+            logger.error("No such file: %s", path)
+            return False
+
+        if data is None:
+            with open(path, mode="r") as inFile:
+                data = json.load(inFile)
+
+        shape = Shape.polygonFromGeoJson(data.get("polygon", {}))
+        if shape is None:
+            logger.error("No database specified or available")
+            return False
+
+        bounds = shape.bounds
+
+        fileUUID = str(uuid.uuid5(UUID_NS, data.get("administrativeID")))
+
+        dbStat = self._db.editMapRecord(
+            cmd="replace" if doReplace else "insert",
+            # FileUUID should be created in IngestMapFile
+            recordUUID=fileUUID,
+            label=data.get("label"),
+            source=path,
+            coordSystem="WGS84",
+            west=bounds.get("west", 0.0),
+            south=bounds.get("south", 0.0),
+            east=bounds.get("east", 0.0),
+            north=bounds.get("north", 0.0),
+            area=shape.area,
+            validFrom=data.get("validFrom", None),
+            validTo=data.get("validTo", None),
+            meta={"admName": data.get("administrativeName", None),
+                  "admID": data.get("administrativeID", None)}
+        )
+
+        if dbStat:
+            logger.info("Indexed file: %s", path)
+        else:
+            logger.error("Failed to index file: %s", path)
+
+        return dbStat
+
+    ##
     #  Internal Functions
     ##
 
