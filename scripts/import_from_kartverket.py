@@ -193,4 +193,3 @@ if __name__ == "__main__":
             for index, row in data.iterrows():
                 row_dic = row.to_dict()
                 dump_data(row_dic, f"{entry.fn_out}_{index}")
-                raise RuntimeError("Just stop for 'debugging'")
